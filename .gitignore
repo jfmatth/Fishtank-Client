@@ -1,0 +1,7 @@
+*.log
+*.db
+*.pyc
+*.project
+*.pydevproject
+activate.cmd
+vSettingsMgr
