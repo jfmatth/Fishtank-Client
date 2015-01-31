@@ -6,7 +6,6 @@ from conf import logconfig
 from conf import constants
 
 from settingmgr.dict import DBDict
-from db.tables import dbInit
 
 # list of all modules we'll call from scheduler.
 from jobs import test1
@@ -15,14 +14,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.events import EVENT_SCHEDULER_SHUTDOWN
 
 logger = logging.getLogger(__name__)
+
 settings = DBDict(constants.SETTING_FILE)
 
-def setup():
-    # setup the environment, DB's, etc.
-    dbInit(constants.SETTING_FILE)
-
-
-def main():
+if __name__ == '__main__':
+    
     logger.info("loading scheduler")
     scheduler = BackgroundScheduler()
     
@@ -43,7 +39,3 @@ def main():
             
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown()
-
-
-if __name__ == '__main__':
-    main()

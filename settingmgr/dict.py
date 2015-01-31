@@ -1,4 +1,5 @@
-from db import Setting, dbInit
+from db.tables import Setting, dbInit
+
 import json
 import logging
 import requests
