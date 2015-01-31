@@ -2,7 +2,7 @@
 
 import logging
 
-from settingmgr.dict import DBDict
+from dbdict import DBDict
 from conf import constants
 
 logger = logging.getLogger(__name__)
