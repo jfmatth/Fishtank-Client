@@ -1,11 +1,11 @@
 import peewee
 import argparse
 
-db = peewee.SqliteDatabase(None)
+database = peewee.SqliteDatabase(None)
 
 class basetable(peewee.Model):
     class Meta:
-        database = db
+        database = database
 
 # Setting - basically a key / value DB
 class Setting(basetable):
@@ -16,10 +16,10 @@ class Setting(basetable):
         return self.select()
 
 
-def dbInit(name="database.db"):
-    db.init(name)
-    db.connect()
-    db.create_tables([Setting], safe=True)
+def dbInit(name="database.xdb"):
+    database.init(name)
+    database.connect()
+    database.create_tables([Setting], safe=True)
 
 if __name__== "__main__":
     parser = argparse.ArgumentParser()

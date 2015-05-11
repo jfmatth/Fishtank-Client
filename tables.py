@@ -1,10 +1,11 @@
 import peewee
+from peewee import CompositeKey
 
-db = peewee.SqliteDatabase(None)
+database = peewee.SqliteDatabase(None)
 
 class basetable(peewee.Model):
     class Meta:
-        database = db
+        database = database
 
 # Setting - basically a key / value DB
 class Setting(basetable):
@@ -27,22 +28,24 @@ class Backup(basetable):
 
 # File - each file in the ZIP, related to that parent record.
 class File(basetable):
-    backup   = peewee.ForeignKeyField(Backup, related_name='files')
-
-    fullpath = peewee.CharField(unique=True, index=True)
+    archive =  peewee.ForeignKeyField(Backup)
+    
+    fullpath = peewee.CharField(index=True)
     crc      = peewee.CharField(index=True)
     filename = peewee.CharField()
     size     = peewee.IntegerField()
     modified = peewee.DateField()
     accessed = peewee.DateField()
     created  = peewee.DateField()
-
+    
+    class Meta:
+        primary_key = CompositeKey("fullpath", "crc")
 
 
 # Initialize all the tables
-def dbInit(name="database.db"):
-    db.init(name)
-    db.connect()
-    db.create_tables([Setting], safe=True)
-    db.create_tables([Backup], safe=True)
-    db.create_tables([File], safe=True)
+def dbInit(name="database.xdb"):
+    database.init(name)
+    database.connect()
+    database.create_tables([Setting], safe=True)
+    database.create_tables([Backup], safe=True)
+    database.create_tables([File], safe=True)

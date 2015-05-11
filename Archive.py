@@ -2,68 +2,40 @@ import zipfile
 import uuid
 import pathlib
 import zlib
+import logging
+import os
+import db
 
-import peewee
-from peewee import CompositeKey
+logger = logging.getLogger(__name__)
 
-db = peewee.SqliteDatabase(None)
+# pointers to DB stuff
+Backup = db.Backup
+File = db.File
 
-class basetable(peewee.Model):
-    class Meta:
-        database = db
-
-
-# Backup - represents a ZIP file backup
-class Backup(basetable):
-    fullpath = peewee.CharField(unique=True, index=True)
-    encrypted = peewee.BooleanField(index=True)             # encrypted zips are called?
-    uploaded = peewee.BooleanField(index=True)
-
-    def All(self):
-        return self.select()
-
-
-# File - each file in the ZIP, related to that parent record.
-class File(basetable):
-    backup   =  peewee.ForeignKeyField(Backup)
-    
-    fullpath = peewee.CharField(index=True)
-    crc      = peewee.CharField(index=True)
-    filename = peewee.CharField()
-    size     = peewee.IntegerField()
-    modified = peewee.DateField()
-    accessed = peewee.DateField()
-    created  = peewee.DateField()
-    
-    class Meta:
-        primary_key = CompositeKey("fullpath", "crc")
-
-
-# Initialize all the tables
-def dbInit(name="database.db"):
-    db.init(name)
-    db.connect()
-    db.create_tables([Backup], safe=True)
-    db.create_tables([File], safe=True)
-
-
-class Manager():
+class ArchiveManager():
     # manage an archive of files and the DB behind them 
     def __init__(self, archivepath, name="archive.db"):
 
         self.size = 0                   # current size of archive
-        self.archive = None                 # current archive (zip) file being used.
+        self.archive = None             # current archive (zip) file being used.
         self.name = None                # current name of arhive
         self.limit = 100000             # limit of Archive size
-
-        self.path = pathlib.Path(archivepath)
-
-        # Initialize the DB (peewee).
-        dbInit( str(self.path / name) )     #  DUDE, I love pathlib.
-
         self.backup_record = None       # FK pointer
 
+        self.path = pathlib.Path(archivepath).resolve()
+        logger.debug("path = %s" % self.path)
 
+        # Initialize the DB (peewee).
+        logger.debug("calling dbInit()")
+        db.dbInit( str(self.path / name) )     #  DUDE, I love pathlib.
+
+
+    def close(self):
+        self._closearchive()
+        
+        return True
+        
+    
     def _crc(self, f):
         prev = 0
         for line in open(f,"rb"):
@@ -71,19 +43,31 @@ class Manager():
 
         return "%X"%(prev & 0xFFFFFFFF)
 
-    # _archivename - setup a new archive, close the old one if necessary.
-    #
-    def _newarchive(self):
+    def _closearchive(self):
+        logger.debug("closing archive")
         if self.archive:
             self.archive.close()
         
-        self.size = 0
-        self.name = self.path / ( str( uuid.uuid4()) + ".zip")
-        self.archive = zipfile.ZipFile(self.archive_name, "w", compression=zipfile.ZIP_DEFLATED)
+        self.size = 0                   # current size of archive
+        self.archive = None             # current archive (zip) file being used.
+        self.name = None                # current name of arhive
+        self.backup_record = None       # FK pointer
+
+
+    # _newarchive - setup a new archive, close the old one if necessary.
+    #
+    def _newarchive(self):
+        self._closearchive()
+            
+        self.name = (self.path / ( str( uuid.uuid4()) + ".zip") ).as_posix()
+        self.archive = zipfile.ZipFile(str(self.name), "w", compression=zipfile.ZIP_DEFLATED)
 
         # create a new Backup entry in the DB.    
-        self.backup_record = Backup.create(Backup.fullpath == self.name)
-        
+        self.backup_record = Backup.create(fullpath = self.name,
+                                           encrypted = False, 
+                                           uploaded = False)
+
+        logger.info("Created new backup backup record %s" % self.backup_record)        
         return 
 
 
@@ -96,64 +80,117 @@ class Manager():
 
     # addfile - Add to the DB and ZIP file.
     #
-    def addfile(self, f):
+    def addfile(self, f1):
         #
         # f - (pathlib.Path) File to add to the archive, only one file at a time :)
         #
 
         self.checkarchive()
 
-        with db.atomic():
-            print "adding %s to DB/Archive" % f
-            
-            self.archive.write( str(f.as_posix() ) )
-            self.archive_size += f.stat().st_size
-
-            # keep the times as integers for simplicity sake.
-            File.create(
-                        backup   = self.backup_record, 
-                        
-                        fullpath = f.as_posix(),
-                        filename = f.name, 
-                        size = f.stat().st_size,
-                        modified = f.stat().st_mtime, 
-                        accessed = f.stat().st_atime, 
-                        created  = f.stat().st_ctime,
-                        crc      = self._crc(f.as_posix() ) 
-                       )
+        try:
+            with db.database.atomic():
+                f = f1.resolve()
+                
+                logger.info("adding %s to DB/Archive" % str(f))
+    
+                self.archive.write( str(f) )
+                self.size += f.stat().st_size
+    
+                # keep the times as integers for simplicity sake.
+                File.create(
+                            backup   = self.backup_record, 
+                            
+                            fullpath = f.as_posix(),
+                            filename = f.name, 
+                            size = f.stat().st_size,
+                            modified = f.stat().st_mtime, 
+                            accessed = f.stat().st_atime, 
+                            created  = f.stat().st_ctime,
+                            crc      = self._crc(f.as_posix() ) 
+                           )
+                
+                # everything worked, let em know.
+                return True
+                
+        except Exception, e:
+            raise
 
 
     # findfind -See if this file (f) already is in the DB
     # 
     def findfile(self, f):
 
-        filename = f.as_posix()
+        filename = f.resolve().as_posix()
 
         try:
             # search DB by name
             try:
-                print "checking name"
-                File.get(File.fullpath == filename )
+                logger.debug("checking name")
+                File.get(File.fullpath == filename)
 
-                print "checking mtime"
+                logger.debug("checking mtime")
                 File.get(File.fullpath == filename,
-                         File.modified == f.stat().st_mtime)
+                         File.modified == f.stat().st_mtime
+                         )
 
-                print "Searching by CRC"
-                Files.get(File.fullpath == filename,
-                          File.crc == self._crc(filename)
-                          )
+                logger.debug("Searching by CRC")
+                File.get(File.fullpath == filename,
+                         File.crc == self._crc(filename)
+                        )
             
             except:
-                print "%s Not Found in DB" % filename
+                logger.debug("%s Not Found in DB" % filename)
                 return False
 
             else:
                 # if we get here, then it's the same file, so return True as an exclusion.
-                print "%s Found in DB" % filename
+                logger.debug("%s Found in DB" % filename)
                 return True
         
         except:
-            print "Error in dbexcluded"
+            logger.error("Error in dbexcluded")
 
 
+
+    def delete_archive(self, name):
+
+        self._closearchive()
+
+        if os.path.exists(name):
+       
+            # remove archive from DB and file system.
+            try:
+                os.remove(name)
+                Backup.select().where(Backup.fullpath == name).get().delete_instance(recursive=True)
+    
+                return True
+            except:
+                
+                raise
+        else:
+            return False
+    
+    def delete_file(self, f):
+        try:
+            logger.debug("trying to delete File record %s" % f)
+            File.get(File.fullpath == f).delete_instance()
+        except Exception, e:
+            logger.error(e)
+
+    
+    # Generators to return backup records of certain types.
+    def all_files(self):
+        return File.select()
+    
+    def all_archives(self):
+        return Backup.select()
+
+    def unencrypted_archives(self):
+        # a generator that returns all Backup records that aren't encrypted yet
+        return Backup.select().where(Backup.encrypted == False)
+        
+    def uploadable_archives(self):
+        # generator to give back all Backup records that uploaded = False
+        return Backup.select().where(Backup.uploaded == False)
+
+            

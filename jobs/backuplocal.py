@@ -19,10 +19,6 @@ settings = DBDict(constants.SETTING_FILE)
 
 _shutdown = False
 
-def shutdown(event):
-    logger.info("Received shutdown event..")
-    _shutdown = True
-
 class BackupSpec():
     def __init__(self, fs=None, ds=None):
         self.filespec = fs
@@ -44,7 +40,8 @@ class BackupSpec():
                 return True
         else:
             return False
-        
+ 
+         
     def fileok(self, filename=None):
         """
         Same as directories, don't backup matching patterns 
@@ -60,7 +57,6 @@ class BackupSpec():
         
     def __repr__(self):
         return "filespec=%s, dirspec=%s, dirspec=%s" % (self.filespec, self.dirspec, self.dirspec)
-
 
 
 
@@ -88,14 +84,16 @@ def fileinfo(filename):
     return fi
 
 
+
+
 def ZipDBFile(path):
-    """ Return a unique pair for zip and db filenames, prefixed with the path """
+    """ Return a unique pair for zip and xdb filenames, prefixed with the path """
     tempname = str( uuid.uuid4() )
 
     zipfilename = os.path.join(path, tempname + ".backup")
-    dbfilename  = os.path.join(path, tempname + ".db")
+#    dbfilename  = os.path.join(path, tempname + ".xdb")
 
-    return zipfilename, dbfilename
+    return zipfilename
 
 
 
@@ -111,8 +109,8 @@ def BackupGenerator(spec = None,
         in the fulldb.dbm database.  dbfile is a DBM of the zipfile files
         
         filespec - which files to backup (*.txt), but as a python regular expression.
-        temppath - Where to put the temporary files (zip and db)
-        datapath - where does the dbfull.db live?
+        temppath - Where to put the temporary files (zip and xdb)
+        datapath - where does the dbfull.xdb live?
         drives   - the outer loop of which locations to backup (C:/, d:/, etc), can be folder qualification too.
         limit    - how big in MB should each (pre compressed) backup set be before yielding. backed up
     """
@@ -130,7 +128,7 @@ def BackupGenerator(spec = None,
     maxfilecount = 10000
 
     try:
-        fulldbname = os.path.join(datapath, "dbfull.db")
+        fulldbname = os.path.join(datapath, "dbfull.xdb")
         
         # change how we use limit, have the calling user set it correctly in actual bytes.
         #_limit = limit * 1024 * 1024
@@ -139,7 +137,7 @@ def BackupGenerator(spec = None,
         _size = 0 
         _zip    = None
         _dbdiff = None
-        _dbfull = anydbm.open(fulldbname, "c")
+#        _dbfull = anydbm.open(fulldbname, "c")
         
         # define our filenames as blanks, so we can see them?
         zf = None
@@ -252,16 +250,23 @@ def BackupGenerator(spec = None,
 
 
 
+def shutdown(event):
+    logger.info("Received shutdown event..")
+    _shutdown = True
+
+
 
 
 def backupmain(cloud = None):
     
-    if cloud == None:
-        logger.exception("no cloud to backup to")
-        raise Exception("No cloud to backup to :) ")
-    
+# no need for a cloud, that's in another job.
+#     if cloud == None:
+#         logger.exception("no cloud to backup to")
+#         raise Exception("No cloud to backup to :) ")
+#     
     logger.info("BackupToCloud() starting")
 
+# no need for this, it's in another job.
 #     # Ping the server first, to make sure we can see if this is worth while.
 #     ping_host = settings[".managerhost"]
 #     ping_guid = settings[".guid"]
@@ -378,17 +383,17 @@ def backupmain(cloud = None):
 #                 cloud.put(fileout)
 #         
 #                 # now, update the dbfull database to show that the files are updated.
-#                 logger.debug("Updating dbfull.db")
+#                 logger.debug("Updating dbfull.xdb")
 #                 if _dbfull == None:
 #                     # only open if we need to.
-#                     _dbfull = anydbm.open(os.path.join(dbpath, "dbfull.db"), "c") 
+#                     _dbfull = anydbm.open(os.path.join(dbpath, "dbfull.xdb"), "c") 
 #                 _dbdiff = anydbm.open(dbf)
 #                 for key in _dbdiff:
-#                     # if it's not there, or the CRC's are different, update the DBfull db.
+#                     # if it's not there, or the CRC's are different, update the DBfull xdb.
 #                     if ( not _dbfull.has_key(key) ) or ( not json.loads(_dbfull[key])['crc'] == json.loads(_dbdiff[key])['crc'] ): 
 #                         _dbfull[key] = _dbdiff[key]
 #                 _dbdiff.close()
-#                 logger.debug("dbfull.db updated")
+#                 logger.debug("dbfull.xdb updated")
 #             else:
 #                 logger.critical("Failed to upload DB for backup, canceling backup")
 #                 break
@@ -426,7 +431,14 @@ def backupmain(cloud = None):
     logger.info("BackupToCloud() finished")
     
 
+def setup():
+    # this module makes sure we are all ready to backup.
+    
+    # check our settings, if we have what we need.
+    pass
+
 
     
 if __name__ == "__main__":
-    backupmain()
+    if setup():
+        backupmain()

@@ -1,4 +1,4 @@
-from db.tables import Setting, dbInit
+from xdb.tables import Setting, dbInit
 
 import json
 import logging
@@ -7,7 +7,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 class DBDict(dict):
-    def __init__(self, name="dbdict.db"):
+    def __init__(self, name="dbdict.xdb"):
             
         logger.debug("Calling dbinit")
         dbInit(name)

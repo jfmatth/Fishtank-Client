@@ -2,9 +2,9 @@ import unittest
 import os
 
 from settingsdict import SettingsDict
-from db import dbInit as Init
+from xdb import dbInit as Init
 
-TESTFILE = "tests.db"
+TESTFILE = "tests.xdb"
 
 class SimpleSettings_Basics(unittest.TestCase):
     '''
@@ -26,22 +26,22 @@ class SimpleSettings_Basics(unittest.TestCase):
         Init(TESTFILE)
         
     def test_1Add(self):
-        c = SettingsDict("tests.db")
+        c = SettingsDict("tests.xdb")
         c[self.k1] = self.v1
         c[self.k2] = self.v2
         
     def test_2Recall(self):
-        c = SettingsDict("tests.db")
+        c = SettingsDict("tests.xdb")
         self.assertEqual(c[self.k1], self.v1)
         self.assertEqual(c[self.k2], self.v2)
         
     def test_3Overwrite(self):
-        c = SettingsDict("tests.db")
+        c = SettingsDict("tests.xdb")
         c[self.k1] = self.v1
         self.assertIn(self.k1, c)
         
     def test_4totalitems(self):
-        c = SettingsDict("tests.db")
+        c = SettingsDict("tests.xdb")
         self.assertTrue(len(c)==2)
 
 if __name__ == '__main__':

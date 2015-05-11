@@ -6,7 +6,7 @@ from conf import logconfig
 from conf import constants
 
 from dbdict import DBDict
-from db.tables import dbInit
+from xdb.tables import dbInit
 
 # list of all modules we'll call from scheduler.
 from jobs import test1
@@ -20,7 +20,6 @@ settings = DBDict(constants.SETTING_FILE)
 def setup():
     # setup the environment, DB's, etc.
     dbInit(constants.SETTING_FILE)
-
 
 def main():
     logger.info("loading scheduler")
@@ -46,4 +45,5 @@ def main():
 
 
 if __name__ == '__main__':
+    setup()
     main()
