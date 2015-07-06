@@ -4,4 +4,4 @@
 *.project
 *.pydevproject
 activate.cmd
-vSettingsMgr
+env
