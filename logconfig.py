@@ -1,10 +1,10 @@
 import os
 import logging.config
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-print BASE_DIR
+BASE_DIR = os.path.dirname(os.getcwd())
 
-LOGLEVEL=os.environ.get('LOGLEVEL', 'DEBUG')
+#LOGLEVEL=os.environ.get('LOGLEVEL', 'DEBUG')
+LOGLEVEL = "DEBUG"
 
 LOGGING_DICT = {
     'version': 1,
@@ -23,7 +23,7 @@ LOGGING_DICT = {
             'formatter' : 'standard',
         },
         'console':{
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.StreamHandler',
         },
     },
@@ -39,7 +39,11 @@ LOGGING_DICT = {
             'level': 'INFO',
             'propagate': True,
         },
-
+        'backup': {
+            'handlers': ['console', 'logfile'],
+            'level': 'INFO',
+            'propagate': True,
+        }
     }
 }
 
