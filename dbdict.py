@@ -1,4 +1,4 @@
-from xdb.tables import Setting, dbInit
+from db import Setting, dbInit
 
 import json
 import logging

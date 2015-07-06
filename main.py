@@ -9,7 +9,7 @@ from dbdict import DBDict
 from xdb.tables import dbInit
 
 # list of all modules we'll call from scheduler.
-from jobs import test1
+from jobs import template
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.events import EVENT_SCHEDULER_SHUTDOWN
@@ -26,8 +26,8 @@ def main():
     scheduler = BackgroundScheduler()
     
     # here is where all jobs / listeners are added.
-    scheduler.add_job(test1.main, 'interval', seconds=3)
-    scheduler.add_listener(test1.listener, EVENT_SCHEDULER_SHUTDOWN)
+    scheduler.add_job(template.main, 'interval', seconds=3)
+    scheduler.add_listener(template.listener, EVENT_SCHEDULER_SHUTDOWN)
 
     logger.info('starting scheduler')
     scheduler.start()
