@@ -23,7 +23,7 @@ LOGGING_DICT = {
             'formatter' : 'standard',
         },
         'console':{
-            'level':'INFO',
+            'level':'DEBUG',
             'class':'logging.StreamHandler',
         },
     },
@@ -31,7 +31,7 @@ LOGGING_DICT = {
     'loggers': {
         ' __main__':{
             'handlers': ['console', 'logfile'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True,
         },
         'jobs': {
@@ -41,9 +41,15 @@ LOGGING_DICT = {
         },
         'backup': {
             'handlers': ['console', 'logfile'],
-            'level': 'INFO',
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'archive': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
             'propagate': True,
         }
+                
     }
 }
 

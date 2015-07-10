@@ -18,8 +18,9 @@ class Setting(basetable):
 # Backup - represents a ZIP file backup
 class Backup(basetable):
     fullpath = peewee.CharField(unique=True, index=True)
+    ready     = peewee.BooleanField(index=True)
     encrypted = peewee.BooleanField(index=True)
-    uploaded = peewee.BooleanField(index=True)
+    uploaded  = peewee.BooleanField(index=True)
 
 
 # File - each file in the ZIP, related to that parent record.

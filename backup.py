@@ -34,22 +34,26 @@ class Backup():
     # _fileglob - returns the file GLOB pattern to exclude from backup.  This should be retreived from the settings DICT.
     #
     def _fileglob(self):
-        return ["*.pyc", "*.dll", "*.csv"]
+        return []
 
 
     # _drives - returns a list of drives to backup, this should come from win32 properties.
-    #
     def _drives(self):
         # returns back a list of drives to backup.
-        return ["C:\\temp",]
+        return []
 
+
+    # _stop - A simple callback to know if we should stop the whole process.
+    def _stop(self):
+        return False
 
     # globexcluded - See if glob matches any of the glob(s)
     #
     def globexcluded(self, glob, globitem):
         # check to see if this item matches the list of globs
         for x in glob:
-            if globitem.match(str(x))   :
+            if globitem.match(str(x)):
+                logger.debug("Skipping %s" % globitem)
                 return True
         else:
             return False
@@ -88,6 +92,7 @@ class Backup():
         if not self.globexcluded(self._dirglob(), p):
 
             for f in self.filebackuplist(p):
+                logging.debug("adding file %s" % f)
                 self.archive.addfile(f)
 
 
@@ -99,12 +104,8 @@ class Backup():
                 # add the current directory too.
                 self.addfoldertoarchive(root)
 
-                logger.info("root = %s" % root)
-                print "dirs = %s" % dirs
-
                 for d in dirs:
                     self.addfoldertoarchive(os.path.join(root,d))
 
         if self.archive:
             self.archive.close()
-
