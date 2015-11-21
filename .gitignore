@@ -5,3 +5,5 @@
 *.pydevproject
 activate.cmd
 env
+.idea
+archives

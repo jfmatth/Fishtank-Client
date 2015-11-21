@@ -9,15 +9,20 @@ import constants
 import logconfig
 
 logger = logging.getLogger(__name__)
-logger.info("Loading backup module")
 
-class Backup():
+class BackupManager():
 
     def __init__(self, mypath = None):
-        logger.debug("Initializing %s" % self.__class__)
+        logger.debug("Initializing BackupManager")
 
-        self.archivepath = mypath or pathlib.Path(os.getcwd())
+        self.archivepath = mypath or pathlib.Path(os.getcwd() )
         self.archive = ArchiveManager(self.archivepath)
+
+        logger.debug("BM: archivepath=%s" % self.archivepath)
+        logger.debug("BM._dirglob() = %s" % self._dirglob())
+        logger.debug("BM:_drives() = %s" % self._drives())
+
+        self.stopbackup = False
 
 
     def _archivepath(self):
@@ -28,6 +33,10 @@ class Backup():
     # _dirglob - returns the directories to exclude from backup.  Should be retrieved from settings.  We always exclude ourself
     #
     def _dirglob(self):
+        """
+        Defines the list of folders to exclude from backup
+        :return:
+        """
         return [] + [self._archivepath()]
 
 
@@ -47,13 +56,22 @@ class Backup():
     def _stop(self):
         return False
 
+
+    def stop(self):
+        if self._stop():
+            self.stopbackup = True
+            return True
+        else:
+            return False
+
+
     # globexcluded - See if glob matches any of the glob(s)
     #
     def globexcluded(self, glob, globitem):
         # check to see if this item matches the list of globs
         for x in glob:
             if globitem.match(str(x)):
-                logger.debug("Skipping %s" % globitem)
+                logger.debug("BM: Skipping excluded %s" % globitem)
                 return True
         else:
             return False
@@ -73,11 +91,9 @@ class Backup():
             if self.globexcluded(self._fileglob(), f):
                 continue
 
-            # is it already backed up?
-            if self.archive.findfile(f):
-                continue
+            self.stop()
 
-            yield f.resolve()
+            yield f
 
 
     # addfoldertoarchive - Iterrate over all files in this folder and see if we should add them to the archive.
@@ -87,25 +103,35 @@ class Backup():
 
         p = pathlib.Path(folder).resolve()
 
-        logging.info("p = %s" % p)
+        logger.info("BM: addfoldertoarchive.p = %s" % p)
 
         if not self.globexcluded(self._dirglob(), p):
 
             for f in self.filebackuplist(p):
-                logging.debug("adding file %s" % f)
-                self.archive.addfile(f)
+                if self.stopbackup: break
+
+                self.archive.fileadd(f)
 
 
-    def main(self):
+    def run(self):
+
+        logger.debug("BM: run()")
         for drive in self._drives():
+            logger.debug("BM: drive = %s" % drive)
+
+            if self.stopbackup: break
 
             for root, dirs, files in os.walk(drive):
+
+                if self.stopbackup: break
 
                 # add the current directory too.
                 self.addfoldertoarchive(root)
 
                 for d in dirs:
                     self.addfoldertoarchive(os.path.join(root,d))
+                    if self.stopbackup: break
+
 
         if self.archive:
             self.archive.close()

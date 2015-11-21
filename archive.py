@@ -4,37 +4,31 @@ import logging
 import os
 import uuid 
 
-import db
+from db import Backup, File, database
 
 logger = logging.getLogger(__name__)
 
-# pointers to DB stuff
-Backup = db.Backup
-File = db.File
-
 class ArchiveManager():
     # manage an archive of files and the DB behind them
-    def __init__(self, archivepath, name="archive.db"):
+
+    def __init__(self, archivepath=os.curdir):
+        logger.debug("AM: __init__")
 
         self.size = 0                   # current size of archive
         self.archive = None             # current archive (zip) file being used.
-        self.name = None                # current name of arhive
-        self.limit = 1024 * 10000        # limit of Archive size
-        self.backuprecord = None       # FK pointer
+        self.name = None                # current name of archive
+        self.limit = 1024 * 10000       # limit of Archive size
+        self.backuprecord = None        # FK pointer
 
-        self.path = pathlib.Path(archivepath).resolve()
-        logger.debug("path = %s" % self.path)
+        # self.path = pathlib.Path(archivepath).resolve()
+        self.path = pathlib.Path(archivepath).resolve()     # where do we put archives?
+        logger.debug("AM .path = %s" % self.path)
 
-        # Initialize the DB (peewee).
-        logger.debug("calling dbInit()")
-        db.dbInit( str(self.path / name) )     #  DUDE, I love pathlib.
+        self._validate()
 
-        self.validate()
-
-        
-    def validate(self):
+    def _validate(self):
         # validate when all the archives you think you have, remove the ones you don't
-        logger.debug("validating all archives.")
+        logger.debug("AM: validating all archives.")
         
         self.close()
         
@@ -42,12 +36,11 @@ class ArchiveManager():
 
             # if the archive doesn't exist, remove it from the DB and all its referenced files
             if not os.path.exists(a.fullpath):
-                logger.debug("Deleting non-existent archive %s" % a.fullpath)
+                logger.warning("AM: removing reference to non-existent archive %s" % a.fullpath)
                 a.delete_instance(recursive=True)
-                   
 
     def close(self):
-        logger.debug("Close")
+        logger.debug("AM: close()")
         self._closearchive()
 
         return True
@@ -64,11 +57,12 @@ class ArchiveManager():
 #         return "%X"%(prev & 0xFFFFFFFF)
 
     def _closearchive(self):
-        logger.debug("closing archive")
         if self.archive:
+            logger.debug("AM: Saving DB archive record")
             self.backuprecord.ready = True
             self.backuprecord.save()
             
+            logger.debug("AM: closing archive file")
             self.archive.close()
 
         self.size = 0                   # current size of archive
@@ -84,6 +78,7 @@ class ArchiveManager():
 
         self.name = (self.path / ( str( uuid.uuid4()) + ".zip") ).as_posix()
         self.archive = zipfile.ZipFile(str(self.name), "w", compression=zipfile.ZIP_DEFLATED)
+        logger.debug("AM: create new archive file %s" % self.name)
 
         # create a new Backup entry in the DB.
         self.backuprecord = Backup.create(fullpath = self.name,
@@ -91,7 +86,7 @@ class ArchiveManager():
                                            encrypted = False,
                                            uploaded = False)
 
-        logger.info("Created new backup backup record %s" % self.backuprecord)
+        logger.info("AM: Created new backup backup record %s" % self.backuprecord)
 
 
     # checkarchive - Make sure this archive is good to go.
@@ -103,104 +98,105 @@ class ArchiveManager():
 
     # addfile - Add to the DB and ZIP file.
     #
-    def addfile(self, f1):
-        #
-        # f1 - (pathlib.Path) File to add to the archive, only one file at a time :)
-        #
+    def fileadd(self, filetoadd):
 
         self.checkarchive()
+        f = filetoadd.resolve()
 
         try:
-            with db.database.atomic():
-                f = f1.resolve()
 
-                logger.info("adding %s to DB/Archive" % str(f))
+            if not self.filefind(f):
 
-                self.archive.write( str(f) )
-                self.size += f.stat().st_size
+                with database.atomic():
+                    logger.debug("AM: adding %s to DB/Archive" % f)
 
-                # keep the times as integers for simplicity sake.
-                File.create(
-                            backup   = self.backuprecord,
+                    self.archive.write( str(f) )
+                    self.size += f.stat().st_size
 
-                            fullpath = f.as_posix(),
-                            filename = f.name,
-                            size = f.stat().st_size,
-                            modified = f.stat().st_mtime,
-                            accessed = f.stat().st_atime,
-                            created  = f.stat().st_ctime,
-                            crc      = self._crc(f.as_posix() )
-                           )
+                    # keep the times as integers for simplicity sake.
+                    File.create(
+                                backup   = self.backuprecord,
 
-                # everything worked, let em know.
+                                fullpath = f.as_posix(),
+                                filename = f.name,
+                                size     = f.stat().st_size,
+                                modified = f.stat().st_mtime,
+                                accessed = f.stat().st_atime,
+                                created  = f.stat().st_ctime,
+                                crc      = self._crc(f.as_posix() )
+                               )
+
+                    # everything worked, let em know.
+                    return True
+            else:
+                # we found a matching file, so return True anyway
+                logger.debug("AM: Skipping found file %s" % f)
                 return True
 
         except Exception, e:
             raise
 
 
-    # findfind -See if this file (f) already is in the DB
-    #
-    def findfile(self, f):
+    def filefind(self, filetofind):
+        """
+        :param filetofind: file to find in the DB
+        :return: True - found, False - not there
+        """
 
-        filename = f.resolve().as_posix()
+        f = filetofind.resolve()
 
         try:
-            # search DB by name
-            try:
-                File.get(File.fullpath == filename)
-
-                File.get(File.fullpath == filename,
-                         File.modified == f.stat().st_mtime
-                         )
-
-# Remove CRC check for now.
-#                 logger.debug("Searching by CRC")
-#                 File.get(File.fullpath == filename,
-#                          File.crc == self._crc(filename)
-#                         )
-
-            except:
-                logger.debug("%s Not Found in DB" % filename)
-                return False
-
-            else:
-                # if we get here, then it's the same file, so return True as an exclusion.
-                logger.debug("%s Found in DB" % filename)
-                return True
-
+            File.get(File.fullpath == f.as_posix(),
+                     File.modified == f.stat().st_mtime,
+                     File.crc == self._crc(f)
+                     )
         except:
-            logger.error("Error in dbexcluded")
+            logger.debug("AM: %s Not Found in DB" % f)
+            return False
+
+        else:
+            # if we get here, then it's the same file, so return True as an exclusion.
+            logger.debug("AM: %s Found in DB" % f)
+            return True
 
 
-
-    def delete_archive(self, name):
-
+    def archivedelete(self, nametodelete):
+        logger.debug("AM: archivedelete()")
         self._closearchive()
 
-        if os.path.exists(name):
+        if os.path.exists(nametodelete):
 
             # remove archive from DB and file system.
             try:
-                os.remove(name)
-                Backup.select().where(Backup.fullpath == name).get().delete_instance(recursive=True)
+                logger.debug("AM:Deleting file and record for %s" % nametodelete)
+                os.remove(nametodelete)
+                Backup.select().where(Backup.fullpath == nametodelete).get().delete_instance(recursive=True)
 
                 return True
             except:
-
+                logger.debug("AM:Exception during os.remove() or delete_instance for %s" % nametodelete)
                 raise
         else:
+            logger.debug("AM: %s does not exist" % nametodelete)
             return False
 
-    def delete_file(self, f):
+
+    def filedelete(self, filetodelete):
+
+        logger.debug("AM: filedelete() - filetodelete = %s" % filetodelete)
+
+        f = pathlib.Path(filetodelete)
+
         try:
-            logger.debug("trying to delete File record %s" % f)
-            File.get(File.fullpath == f).delete_instance()
+            logger.debug("AM: trying to delete File record %s" % f)
+            File.get(File.fullpath == f.as_posix()).delete_instance()
+            return True
+
         except Exception, e:
-            logger.error(e)
+            logger.debug("AM: Exception during delete_instance for %s" % filetodelete)
+            return False
 
 
-    # Generators to return backup records of certain types.
     def all_files(self):
         return File.select()
 

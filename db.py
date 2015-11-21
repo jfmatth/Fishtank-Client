@@ -3,7 +3,7 @@
 import peewee
 from peewee import CompositeKey
 
-database = peewee.SqliteDatabase(None)
+database = peewee.SqliteDatabase("sqlite3.db")
 
 class basetable(peewee.Model):
     class Meta:
@@ -39,10 +39,18 @@ class File(basetable):
         primary_key = CompositeKey("fullpath", "crc")
 
 
-# Initialize all the tables
-def dbInit(name="database.db"):
-    database.init(name)
-    database.connect()
-    database.create_tables([Setting], safe=True)
-    database.create_tables([Backup], safe=True)
-    database.create_tables([File], safe=True)
+database.connect()
+database.create_tables([Setting], safe=True)
+database.create_tables([Backup],  safe=True)
+database.create_tables([File],    safe=True)
+
+#
+#
+#
+# # Initialize all the tables
+# def dbInit(name="database.db"):
+#     database.init(name)
+#     database.connect()
+#     database.create_tables([Setting], safe=True)
+#     database.create_tables([Backup], safe=True)
+#     database.create_tables([File], safe=True)

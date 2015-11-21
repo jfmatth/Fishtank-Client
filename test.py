@@ -1,68 +1,89 @@
 import unittest
-
-import archive
 import os
 import sys
 import pathlib
-import uuid
 
-p = os.environ['TEMP']
-f = pathlib.Path(sys.argv[0])
+import archive
+import backup
 
-
-class TestArchive(unittest.TestCase):
-    
-    def test_1_checkall(self):
-        a = archive.ArchiveManager(p, "test.db")
-        
-        # validate they all exist
-        for z in a.all_archives():
-            self.assertTrue(os.path.exists(z.fullpath))
-         
-        a.close()
-
-    def test_closearchive(self):
-
-        a = archive.ArchiveManager(p, "test.db")
-
-        a.close()
-        
-        # check that all the settings are reset    
-        self.assertEqual(a.size, 0, "Size check not 0")
-        self.assertEqual(a.archive, None, "Archive not None")
-        self.assertEqual(a.name, None, "Name not blank")
+ARCHIVEPATH = pathlib.Path("archives/").resolve()
 
 
-    def test_2_deleteall(self):
-        a = archive.ArchiveManager(p, "test.db")
+class TestArchiveManager(unittest.TestCase):
 
-        for z in a.all_archives():
-            self.assertTrue( a.delete_archive(z.fullpath), z.fullpath )
-             
-        a.close()
-           
-    def test_3sizelimit(self):
-        # generate some random files to be added to the archive.
-        JUNKLINE = "abcedfdfasf;laksjf;lasdfjalsfjas;ldfkjwl;erjioweurj3434udsfjasf;lkjsafpoierhihioshdaf;asjflkasjf\n"
-        def junk(filename):
-            with open(filename,"w") as f:
-                for l in xrange(1,1000):
-                    f.write(JUNKLINE)
-   
-   
-        a = archive.ArchiveManager(p, "test.db")
+    def test_20_fileadd(self):
+        a = archive.ArchiveManager(ARCHIVEPATH)
+        f = pathlib.Path(sys.executable)
 
-        a.limit = 1024 * 1000
-   
-        for x in xrange(1,10):
-            JUNKFILE = str(uuid.uuid4() )
-            jpath = pathlib.Path(p) / JUNKFILE
-            fx = pathlib.Path("%s.txt" % (jpath) )
-            junk(fx.as_posix())
-            a.addfile(fx)
-            os.remove(fx.as_posix() )
-    
-        a.close()
+        self.assertTrue(a.fileadd(f))
+
+        # adding the same file should also return true, even though it's not added.
+        self.assertTrue(a.fileadd(f))
+
+    def test_30_filefind(self):
+        a = archive.ArchiveManager(ARCHIVEPATH)
+        f = pathlib.Path(sys.executable)
+
+        self.assertTrue(a.filefind(f) )
+
+    def test_40_checkarchives(self):
+
+        a = archive.ArchiveManager(ARCHIVEPATH)
+
+        for f in a.all_archives():
+            self.assertTrue( str(os.path.exists(f.fullpath)) )
+
+    def test_60_addallpython(self):
+
+        p = pathlib.Path(sys.executable).parent
+        a = archive.ArchiveManager(ARCHIVEPATH)
+
+        # add all files in the python directory
+        for x in p.glob("*"):
+            if not x.is_dir():
+                self.assertTrue(a.fileadd(x))
+
+    def test_70_deletefilerecord(self):
+        # try to delete the first record
+        a = archive.ArchiveManager(ARCHIVEPATH)
+
+        # find the record to delete, delete it, then validate it's not still in the DB
+        record = pathlib.Path(a.all_files()[0].fullpath)
+        self.assertTrue(a.filedelete(record) )
+        self.assertFalse(a.filefind(record) )
+
+
+
+class MyBackup(backup.BackupManager):
+
+    def __init__(self, **kwargs):
+        super(MyBackup, self).__init__(self, **kwargs)
+
+        self.stopcount = 0
+
+
+    def _dirglob(self):
+        return [] + [self._archivepath(),]
+
+    def _drives(self):
+        return [str(pathlib.Path(sys.executable).parent),]
+
+    def _fileglob(self):
+        return ["*.pyc", "*.dll", "*.csv", "*.iso"]
+
+    def _stop(self):
+        print "test: %s" % self.stopcount
+        self.stopcount += 1
+        if self.stopcount > 8:
+            return True
+        else:
+            return False
+
+class TestBackupManager(unittest.TestCase):
+
+    def test_10(self):
+        b = MyBackup(mypath=ARCHIVEPATH)
+        b.run()
 
 
 if __name__ == '__main__':
