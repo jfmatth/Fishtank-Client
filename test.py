@@ -8,7 +8,6 @@ import backup
 
 ARCHIVEPATH = pathlib.Path("archives/").resolve()
 
-
 class TestArchiveManager(unittest.TestCase):
 
     def test_20_fileadd(self):
@@ -57,7 +56,7 @@ class TestArchiveManager(unittest.TestCase):
 class MyBackup(backup.BackupManager):
 
     def __init__(self, **kwargs):
-        super(MyBackup, self).__init__(self, **kwargs)
+        super(MyBackup, self).__init__(**kwargs)
 
         self.stopcount = 0
 

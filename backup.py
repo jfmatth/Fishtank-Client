@@ -10,10 +10,11 @@ import logconfig
 
 logger = logging.getLogger(__name__)
 
-class BackupManager():
+class BackupManager(object):
 
     def __init__(self, mypath = None):
         logger.debug("Initializing BackupManager")
+        logger.debug("mypath = %s" % mypath)
 
         self.archivepath = mypath or pathlib.Path(os.getcwd() )
         self.archive = ArchiveManager(self.archivepath)
