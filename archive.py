@@ -20,8 +20,9 @@ class ArchiveManager():
         self.limit = 1024 * 10000       # limit of Archive size
         self.backuprecord = None        # FK pointer
 
-        # self.path = pathlib.Path(archivepath).resolve()
         self.path = pathlib.Path(archivepath).resolve()     # where do we put archives?
+        # make sure it exists
+        pathlib.Path(archivepath).mkdir(exist_ok=True)
         logger.debug("AM .path = %s" % self.path)
 
         self._validate()

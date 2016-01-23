@@ -78,10 +78,20 @@ class MyBackup(backup.BackupManager):
         else:
             return False
 
+
+class MyBlankBackup(backup.BackupManager):
+    pass
+
+
 class TestBackupManager(unittest.TestCase):
 
     def test_10(self):
         b = MyBackup(mypath=ARCHIVEPATH)
+        b.run()
+
+    def test_20(self):
+        # test a blank class with nothing in it.
+        b = MyBlankBackup()
         b.run()
 
 

@@ -5,16 +5,13 @@ import os
 import pathlib
 
 from archive import ArchiveManager
-import constants
-import logconfig
 
 logger = logging.getLogger(__name__)
 
 class BackupManager(object):
 
     def __init__(self, mypath = None):
-        logger.debug("Initializing BackupManager")
-        logger.debug("mypath = %s" % mypath)
+        logger.debug("BM: Initializing")
 
         self.archivepath = mypath or pathlib.Path(os.getcwd() )
         self.archive = ArchiveManager(self.archivepath)
@@ -47,7 +44,7 @@ class BackupManager(object):
         return []
 
 
-    # _drives - returns a list of drives to backup, this should come from win32 properties.
+    # _drives - returns a list of drives to backup
     def _drives(self):
         # returns back a list of drives to backup.
         return []
