@@ -121,9 +121,9 @@ class BaseBackupManager(object):
                 self.addfoldertoarchive(root)
 
                 for d in dirs:
-                    self.addfoldertoarchive(os.path.join(root,d))
-                    if self.stopbackup: break
-
+                    self.addfoldertoarchive( os.path.join(root,d) )
+                    if self.stopbackup:
+                        break
 
         if self.archive:
             self.archive.close()
