@@ -53,7 +53,7 @@ class TestArchiveManager(unittest.TestCase):
 
 
 
-class MyBackup(backup.BackupManager):
+class MyBackup(backup.BaseBackupManager):
 
     def __init__(self, **kwargs):
         super(MyBackup, self).__init__(**kwargs)
@@ -71,7 +71,7 @@ class MyBackup(backup.BackupManager):
         return ["*.pyc", "*.dll", "*.csv", "*.iso"]
 
     def _stop(self):
-        print "test: %s" % self.stopcount
+        # print "test: %s" % self.stopcount
         self.stopcount += 1
         if self.stopcount > 8:
             return True
@@ -79,7 +79,7 @@ class MyBackup(backup.BackupManager):
             return False
 
 
-class MyBlankBackup(backup.BackupManager):
+class MyBlankBackup(backup.BaseBackupManager):
     pass
 
 

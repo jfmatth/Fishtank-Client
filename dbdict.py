@@ -1,16 +1,33 @@
-from db import Setting, dbInit
+# from db import Setting, dbInit
 
 import json
 import logging
 import requests
 
+import peewee
+
 logger = logging.getLogger(__name__)
+
+
+# put all DB stuff directly into the file, no need to import then :)
+database = peewee.SqliteDatabase("dbdict.db")
+
+class basetable(peewee.Model):
+
+    class Meta:
+        database = database
+
+# Setting - basically a key / value DB
+class Setting(basetable):
+    key = peewee.CharField(unique=True)
+    value = peewee.TextField(null=True)
+
+database.connect()
+database.create_tables([Setting], safe=True)
 
 class DBDict(dict):
     def __init__(self, name="dbdict.xdb"):
             
-        logger.debug("Calling dbinit")
-        dbInit(name)
         self.refresh()
         
         dict.__init__(self)

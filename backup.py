@@ -8,7 +8,9 @@ from archive import ArchiveManager
 
 logger = logging.getLogger(__name__)
 
-class BackupManager(object):
+# BasetBackupManager - This is the base abstract class to get the backups working.  You should inherit from this, overriding
+# the various classes to make it work.  Without overriding things, nothing will get backed up.
+class BaseBackupManager(object):
 
     def __init__(self, mypath = None):
         logger.debug("BM: Initializing")
@@ -22,46 +24,39 @@ class BackupManager(object):
 
         self.stopbackup = False
 
-
     def _archivepath(self):
         # this will probably return a settings property at some point
         return self.archivepath
-
 
     # _dirglob - returns the directories to exclude from backup.  Should be retrieved from settings.  We always exclude ourself
     #
     def _dirglob(self):
         """
-        Defines the list of folders to exclude from backup
+        Defines the list of folders to exclude from backup, including our own.
         :return:
         """
         return [] + [self._archivepath()]
 
-
-    # _fileglob - returns the file GLOB pattern to exclude from backup.  This should be retreived from the settings DICT.
+    # _fileglob - returns the file GLOB pattern to exclude from backup.
     #
     def _fileglob(self):
         return []
-
 
     # _drives - returns a list of drives to backup
     def _drives(self):
         # returns back a list of drives to backup.
         return []
 
-
     # _stop - A simple callback to know if we should stop the whole process.
     def _stop(self):
         return False
 
-
-    def stop(self):
+    def checkstop(self):
         if self._stop():
             self.stopbackup = True
             return True
         else:
             return False
-
 
     # globexcluded - See if glob matches any of the glob(s)
     #
@@ -73,7 +68,6 @@ class BackupManager(object):
                 return True
         else:
             return False
-
 
     # filebackuplist - Yield only files in this folder that are OK to backup to the archive.
     #
@@ -89,7 +83,7 @@ class BackupManager(object):
             if self.globexcluded(self._fileglob(), f):
                 continue
 
-            self.stop()
+            self.checkstop()
 
             yield f
 

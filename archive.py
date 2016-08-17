@@ -2,11 +2,43 @@ import zipfile
 import pathlib
 import logging
 import os
-import uuid 
+import uuid
 
-from db import Backup, File, database
+import peewee
 
 logger = logging.getLogger(__name__)
+
+# Define the DB's we'll use in this module.
+database = peewee.SqliteDatabase("archive.db")
+class basetable(peewee.Model):
+    class Meta:
+       database = database
+
+# Backup - represents a ZIP file backup
+class Backup(basetable):
+    fullpath = peewee.CharField(unique=True, index=True)
+    ready = peewee.BooleanField(index=True)
+    encrypted = peewee.BooleanField(index=True)
+    uploaded = peewee.BooleanField(index=True)
+
+# File - each file in the ZIP, related to that parent record.
+class File(basetable):
+    backup = peewee.ForeignKeyField(Backup)
+
+    fullpath = peewee.CharField(index=True)
+    crc = peewee.CharField(index=True)
+    filename = peewee.CharField()
+    size = peewee.IntegerField()
+    modified = peewee.DateField()
+    accessed = peewee.DateField()
+    created = peewee.DateField()
+
+    class Meta:
+        primary_key = peewee.CompositeKey("fullpath", "crc")
+
+database.connect()
+database.create_tables([Backup],  safe=True)
+database.create_tables([File],    safe=True)
 
 class ArchiveManager():
     # manage an archive of files and the DB behind them
@@ -30,9 +62,9 @@ class ArchiveManager():
     def _validate(self):
         # validate when all the archives you think you have, remove the ones you don't
         logger.debug("AM: validating all archives.")
-        
+
         self.close()
-        
+
         for a in self.all_archives():
 
             # if the archive doesn't exist, remove it from the DB and all its referenced files
@@ -48,13 +80,13 @@ class ArchiveManager():
 
     # not checking based on CRC right now.
     def _crc(self, f):
-        return 0 
-#         
-#         
+        return 0
+#
+#
 #         prev = 0
 #         for line in open(f,"rb"):
 #             prev = zlib.crc32(line, prev)
-# 
+#
 #         return "%X"%(prev & 0xFFFFFFFF)
 
     def _closearchive(self):
@@ -62,7 +94,7 @@ class ArchiveManager():
             logger.debug("AM: Saving DB archive record")
             self.backuprecord.ready = True
             self.backuprecord.save()
-            
+
             logger.debug("AM: closing archive file")
             self.archive.close()
 
@@ -134,7 +166,7 @@ class ArchiveManager():
                 logger.debug("AM: Skipping found file %s" % f)
                 return True
 
-        except Exception, e:
+        except Exception :
             raise
 
 
@@ -193,7 +225,7 @@ class ArchiveManager():
             File.get(File.fullpath == f.as_posix()).delete_instance()
             return True
 
-        except Exception, e:
+        except Exception:
             logger.debug("AM: Exception during delete_instance for %s" % filetodelete)
             return False
 
@@ -211,5 +243,3 @@ class ArchiveManager():
     def uploadable_archives(self):
         # generator to give back all Backup records that uploaded = False
         return Backup.select().where(Backup.uploaded == False)
-
-

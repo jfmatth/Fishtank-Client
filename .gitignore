@@ -7,3 +7,10 @@ activate.cmd
 env
 .idea
 archives
+__pycache__/
+act35.bat
+activate.bat
+db/
+environment.py
+vPython27/
+vPython35/

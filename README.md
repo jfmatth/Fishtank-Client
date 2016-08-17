@@ -25,7 +25,8 @@ backup premise
 		
 	- obvious advantages:
 		simple design
-		if interrupted 
+		if interrupted:
+		  break;
 
 
 
