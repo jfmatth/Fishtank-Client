@@ -1,15 +1,14 @@
 import json
 import logging
+from backup import BaseBackupManager
+import pathlib
 
 logger = logging.getLogger(__name__)
 
-class JSONclient(object):
-    # reads necessary Archive settings from a JSON object
 
-    def __init__(self, sfile = None):
-        if sfile == None:
-            raise
+s = json.loads(open("settings.json").read() )
 
+backup = BaseBackupManager( s["archivepath"] )
 
 
 

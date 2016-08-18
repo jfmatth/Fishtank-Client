@@ -8,8 +8,10 @@ import peewee
 
 logger = logging.getLogger(__name__)
 
+# from environment import archive
+
 # Define the DB's we'll use in this module.
-database = peewee.SqliteDatabase("archive.db")
+database = peewee.SqliteDatabase(None)
 class basetable(peewee.Model):
     class Meta:
        database = database
@@ -36,9 +38,7 @@ class File(basetable):
     class Meta:
         primary_key = peewee.CompositeKey("fullpath", "crc")
 
-database.connect()
-database.create_tables([Backup],  safe=True)
-database.create_tables([File],    safe=True)
+
 
 class ArchiveManager():
     # manage an archive of files and the DB behind them
@@ -49,13 +49,22 @@ class ArchiveManager():
         self.size = 0                   # current size of archive
         self.archive = None             # current archive (zip) file being used.
         self.name = None                # current name of archive
-        self.limit = 1024 * 10000       # limit of Archive size
+        self.maxsize = 1024 * 10000       # limit of Archive size
         self.backuprecord = None        # FK pointer
 
-        self.path = pathlib.Path(archivepath).resolve()     # where do we put archives?
-        # make sure it exists
-        pathlib.Path(archivepath).mkdir(exist_ok=True)
+        try:
+            pathlib.Path(archivepath).mkdir(parents=True, exist_ok=True)
+            self.path = pathlib.Path(archivepath).resolve()
+        except:
+            # make sure it exists
+            raise
+
         logger.debug("AM .path = %s" % self.path)
+
+        database.init(str(self.path / "archive.db") )
+        database.connect()
+        database.create_tables([Backup], safe=True)
+        database.create_tables([File], safe=True)
 
         self._validate()
 
@@ -125,16 +134,18 @@ class ArchiveManager():
     # checkarchive - Make sure this archive is good to go.
     #
     def checkarchive(self):
-        if self.archive == None or self.size > self.limit:
+        # check to see if we have an existing archive (.zip) open or we are over our limit in filesize.
+        if self.archive == None or self.size > self.maxsize:
             self._newarchive()
-
 
     # addfile - Add to the DB and ZIP file.
     #
     def fileadd(self, filetoadd):
 
         self.checkarchive()
-        f = filetoadd.resolve()
+
+        # handle any kind of file coming in, pathlib or str :)
+        f = pathlib.Path(filetoadd).resolve()
 
         try:
 
@@ -175,8 +186,7 @@ class ArchiveManager():
         :param filetofind: file to find in the DB
         :return: True - found, False - not there
         """
-
-        f = filetofind.resolve()
+        f = pathlib.Path(filetofind).resolve()
 
         try:
             File.get(File.fullpath == f.as_posix(),
@@ -218,7 +228,7 @@ class ArchiveManager():
 
         logger.debug("AM: filedelete() - filetodelete = %s" % filetodelete)
 
-        f = pathlib.Path(filetodelete)
+        f = pathlib.Path(filetodelete).resolve()
 
         try:
             logger.debug("AM: trying to delete File record %s" % f)

@@ -14,3 +14,4 @@ db/
 environment.py
 vPython27/
 vPython35/
+settings.json
