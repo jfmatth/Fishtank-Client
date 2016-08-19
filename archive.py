@@ -38,8 +38,6 @@ class File(basetable):
     class Meta:
         primary_key = peewee.CompositeKey("fullpath", "crc")
 
-
-
 class ArchiveManager():
     # manage an archive of files and the DB behind them
 
@@ -125,8 +123,8 @@ class ArchiveManager():
         # create a new Backup entry in the DB.
         self.backuprecord = Backup.create(fullpath = self.name,
                                           ready = False,
-                                           encrypted = False,
-                                           uploaded = False)
+                                          encrypted = False,
+                                          uploaded = False)
 
         logger.info("AM: Created new backup backup record %s" % self.backuprecord)
 

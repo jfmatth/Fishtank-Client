@@ -1,3 +1,14 @@
 {
-  "setting1" : "This is the value of setting 1"
+  "archivepath" : "./archives/",
+  "dirglob" : ["CyberLink",
+                "Documents",
+                "Downloads",
+                "C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\PlanetSide 2\\Resources\\Assets",
+                "Music",
+                "Pictures",
+                "Roaming",
+                "Videos"],
+  "drives" : ["C:/users/public/"],
+  "fileglob" : ["*.pyc", "*.dll", "*.csv", "*.iso"]
 }
+

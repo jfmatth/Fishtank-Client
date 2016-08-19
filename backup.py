@@ -8,55 +8,75 @@ from archive import ArchiveManager
 
 logger = logging.getLogger(__name__)
 
-# BasetBackupManager - This is the base abstract class to get the backups working.  You should inherit from this, overriding
+# BackupManager - This is the base abstract class to get the backups working.  You should inherit from this, overriding
 # the various classes to make it work.  Without overriding things, nothing will get backed up.
-class BaseBackupManager(object):
+class BackupManager(object):
 
     def __init__(self, mypath = None):
         logger.debug("BM: Initializing")
 
-        self.archivepath = mypath or pathlib.Path(os.getcwd() )
-        self.archive = ArchiveManager(self.archivepath)
-
-        logger.debug("BM: archivepath=%s" % self.archivepath)
-        logger.debug("BM._dirglob() = %s" % self._dirglob())
-        logger.debug("BM:_drives() = %s" % self._drives())
+        # self.archivepath = mypath or pathlib.Path(os.getcwd() )
+        self.archive = ArchiveManager(mypath or pathlib.Path(os.getcwd() ) )
 
         self.stopbackup = False
+        self.dirglob = [self.archive.path]
+        self.fileglob = []
+        self.drives = []
 
-    def _archivepath(self):
-        # this will probably return a settings property at some point
-        return self.archivepath
+        self.CurrentFolder = None
+        self.CurrentFile = None
 
-    # _dirglob - returns the directories to exclude from backup.  Should be retrieved from settings.  We always exclude ourself
+        logger.debug("BM: archivepath=%s" % self.archive.path)
+        logger.debug("BM._dirglob() = %s" % self.dirglob)
+        logger.debug("BM:_drives() = %s" % self.drives)
+
+
+    def __str__(self):
+        r = "drives = %s\n" % self.drives
+        r+= "dirglob = %s\n" % self.dirglob
+        r+= "fileglob = %s\n" % self.fileglob
+
+        return r
+
+    def __repr__(self):
+        return self.__str__()
+
+
+    # def _archivepath(self):
+    #     # this will probably return a settings property at some point
+    #     return self.archivepath
     #
-    def _dirglob(self):
-        """
-        Defines the list of folders to exclude from backup, including our own.
-        :return:
-        """
-        return [] + [self._archivepath()]
-
-    # _fileglob - returns the file GLOB pattern to exclude from backup.
+    # # _dirglob - returns the directories to exclude from backup.  Should be retrieved from settings.  We always exclude ourself
+    # #
+    # def _dirglob(self):
+    #     """
+    #     Defines the list of folders to exclude from backup, including our own.
+    #     :return:
+    #     """
+    #     return [] + [self._archivepath()]
     #
-    def _fileglob(self):
-        return []
-
-    # _drives - returns a list of drives to backup
-    def _drives(self):
-        # returns back a list of drives to backup.
-        return []
+    # # _fileglob - returns the file GLOB pattern to exclude from backup.
+    # #
+    # def _fileglob(self):
+    #     return []
+    #
+    # # _drives - returns a list of drives to backup
+    # def _drives(self):
+    #     # returns back a list of drives to backup.
+    #     return []
 
     # _stop - A simple callback to know if we should stop the whole process.
-    def _stop(self):
+    def _stop(self, instance):
         return False
 
     def checkstop(self):
-        if self._stop():
-            self.stopbackup = True
-            return True
-        else:
-            return False
+        if hasattr(self._stop, "__call__"):
+
+            if self.stopbackup or self._stop(self):
+                self.stopbackup = True
+                return True
+            else:
+                return False
 
     # globexcluded - See if glob matches any of the glob(s)
     #
@@ -80,7 +100,7 @@ class BaseBackupManager(object):
                 continue
 
             # is the is in the exclusion list?
-            if self.globexcluded(self._fileglob(), f):
+            if self.globexcluded(self.fileglob, f):
                 continue
 
             self.checkstop()
@@ -97,9 +117,12 @@ class BaseBackupManager(object):
 
         logger.info("BM: addfoldertoarchive.p = %s" % p)
 
-        if not self.globexcluded(self._dirglob(), p):
+        if not self.globexcluded(self.dirglob, p):
+            self.CurrentFolder = folder
 
             for f in self.filebackuplist(p):
+                self.CurrentFile = f
+
                 if self.stopbackup: break
 
                 self.archive.fileadd(f)
@@ -108,7 +131,7 @@ class BaseBackupManager(object):
     def run(self):
 
         logger.debug("BM: run()")
-        for drive in self._drives():
+        for drive in self.drives:
             logger.debug("BM: drive = %s" % drive)
 
             if self.stopbackup: break
