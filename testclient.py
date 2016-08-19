@@ -7,11 +7,17 @@ logger = logging.getLogger(__name__)
 
 def stopcallback(instance):
     print (instance.CurrentFile)
+    print (instance.archive.size)
     return False
 
 s = json.loads(open("settings.json").read() )
 
-backup = BackupManager( s["archivepath"] )
+BackupConfig = {
+    "path" : s["archivepath"],
+}
+
+# backup = BackupManager( s["archivepath"] )
+backup = BackupManager( BackupConfig )
 
 backup.drives = s['drives']
 backup.dirglob = s['dirglob']

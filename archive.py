@@ -8,8 +8,6 @@ import peewee
 
 logger = logging.getLogger(__name__)
 
-# from environment import archive
-
 # Define the DB's we'll use in this module.
 database = peewee.SqliteDatabase(None)
 class basetable(peewee.Model):
@@ -41,18 +39,28 @@ class File(basetable):
 class ArchiveManager():
     # manage an archive of files and the DB behind them
 
-    def __init__(self, archivepath=os.curdir):
+    # def __init__(self, archivepath=os.curdir):
+    def __init__(self, cfg = {}):
+        #:
+        #: cfg - Dictionary of expected configuration parameters
+        #   "archivepath"   - Full path to where to hold all archive files, default current directory os.curdir
+        #   "maxsizeKB"     - Maximum size of archives before compression (.zip)
+
+        # changed to use config variable (cfg) instead of one parameter.  Config is a dictionary
+
         logger.debug("AM: __init__")
+
+        self.maxsize = cfg.get("maxsizeKB",10000 * 102400) # default of 100mb
 
         self.size = 0                   # current size of archive
         self.archive = None             # current archive (zip) file being used.
         self.name = None                # current name of archive
-        self.maxsize = 1024 * 10000       # limit of Archive size
         self.backuprecord = None        # FK pointer
 
         try:
-            pathlib.Path(archivepath).mkdir(parents=True, exist_ok=True)
-            self.path = pathlib.Path(archivepath).resolve()
+            ap = cfg.get("archivepath", os.curdir)
+            pathlib.Path(ap).mkdir(parents=True, exist_ok=True)
+            self.path = pathlib.Path(ap).resolve()
         except:
             # make sure it exists
             raise

@@ -12,11 +12,20 @@ logger = logging.getLogger(__name__)
 # the various classes to make it work.  Without overriding things, nothing will get backed up.
 class BackupManager(object):
 
-    def __init__(self, mypath = None):
+    # def __init__(self, mypath = None):
+    def __init__(self, cfg={}):
+        #:
+        #: cfg - Config dictionary of settings
+        #:      "path" - path to where to store archives, default to os.curdir
+
         logger.debug("BM: Initializing")
 
         # self.archivepath = mypath or pathlib.Path(os.getcwd() )
-        self.archive = ArchiveManager(mypath or pathlib.Path(os.getcwd() ) )
+        self.AMcfg = {
+            "archivepath" : cfg.get("path", pathlib.Path(os.getcwd())),
+        }
+
+        self.archive = ArchiveManager(self.AMcfg)
 
         self.stopbackup = False
         self.dirglob = [self.archive.path]
@@ -29,7 +38,6 @@ class BackupManager(object):
         logger.debug("BM: archivepath=%s" % self.archive.path)
         logger.debug("BM._dirglob() = %s" % self.dirglob)
         logger.debug("BM:_drives() = %s" % self.drives)
-
 
     def __str__(self):
         r = "drives = %s\n" % self.drives
