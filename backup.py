@@ -21,11 +21,11 @@ class BackupManager(object):
         logger.debug("BM: Initializing")
 
         # self.archivepath = mypath or pathlib.Path(os.getcwd() )
-        self.AMcfg = {
+        self.ArchiveConfig = {
             "archivepath" : cfg.get("path", pathlib.Path(os.getcwd())),
         }
 
-        self.archive = ArchiveManager(self.AMcfg)
+        self.archive = ArchiveManager(self.ArchiveConfig)
 
         self.stopbackup = False
         self.dirglob = [self.archive.path]

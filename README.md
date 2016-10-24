@@ -1,4 +1,5 @@
-
+**8/22**
+Best way to pass lots of parameters? 
 
 backup premise
 - use Path from pathlib

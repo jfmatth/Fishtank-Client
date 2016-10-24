@@ -3,12 +3,11 @@
   "dirglob" : ["CyberLink",
                 "Documents",
                 "Downloads",
-                "C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\PlanetSide 2\\Resources\\Assets",
+                "C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\PlanetSide 2\\Resources",
                 "Music",
                 "Pictures",
                 "Roaming",
                 "Videos"],
   "drives" : ["C:/users/public/"],
-  "fileglob" : ["*.pyc", "*.dll", "*.csv", "*.iso"]
+  "fileglob" : ["*.pyc", "*.dll", "*.csv", "*.iso", "*.pack"]
 }
-
