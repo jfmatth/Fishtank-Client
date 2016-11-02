@@ -3,6 +3,7 @@
 from tinydb import TinyDB, Query
 import pathlib  
 
+DBNAME = "db.json"
 
 class ConfigManager(object):
     dbpath = None
@@ -12,51 +13,55 @@ class ConfigManager(object):
         self.db = None                      # TinyDB DB
         self.setup = False                  # are we setup yet?
         self.settings = []                  # a dict to hold client settings
+        self.settingstable = None
 
         if LocationForDB != None:
             self._open(LocationForDB)
 
     def _open(self, LocationForDB):
-        self.dbfile = pathlib.Path(LocationForDB).resolve() / "db.json"
+        DBFilePath = pathlib.Path(LocationForDB).resolve()
+        DBFileToOpen = DBFilePath / DBNAME
         try:
-            if self.dbfile.exists():
-                self._OpenDB()
+            if DBFileToOpen.exists():
+                self._OpenDB(DBFileToOpen)
                 self._loadsettings()
+
                 self.setup = True
+                self.dbpath = DBFilePath
             else:
-                raise Exception("Issue opening DB") 
+                raise Exception("database does not exist, %s" % DBFileToOpen ) 
         except:
             self.setup = False
             raise 
 
-    def _CreateDB(self):
-        if self.dbfile != None amd self.dbfile.exists():
-            self.db = TinyDB(str(self.dbfile) )
-            self.db.purge_tables()
-            self.db.insert({"LocationForDB" : str(LocationForDB)} )
-            self.settingstable = self.db.table("settings")
-        else:
-            raise Exception("Cannont have blank dbfile path")
+    def _CreateDB(self, LocationForDB):
 
-    def _OpenDB(self):
-        if self.dbfile != None:
-            self.db = TinyDB(str(self.dbfile) )
-            self.settingstable = self.db.table("settings")
-        else:
-            raise Exception("Blank files not allowed")
+        tempdb = None
+        temppath = None
+
+        try:
+            temppath = pathlib.Path(LocationForDB).resolve()
+            tempdbname = temppath / DBNAME
+    
+            if not tempdbname.exists(): 
+                tempdb = TinyDB(str(tempdbname) )
+                tempdb.purge_tables()
+                tempdb.insert({"LocationForDB" : str(temppath)} )
+            else:
+                raise Exception("Unable to create DB")
+        except:
+            raise
+
+    def _OpenDB(self, FileToOpen):
+        self.db = TinyDB(str(FileToOpen) )
+        self.settingstable = self.db.table("settings")
 
     def _loadsettings(self):
         print("load settings")
         pass
 
     def initialize(self, LocationForDB):
-        validlocation = pathlib.Path(LocationForDB).resolve()
         if not self.setup:
-            self.dbfile = pathlib.Path(LocationForDB).resolve()
-
-            self._CreateDB()
-        else:
-            raise Exception("Already Initialized")
-
-
-
+            if pathlib.Path(LocationForDB).is_dir():
+                self._CreateDB(LocationForDB)
+                self._open(LocationForDB)
