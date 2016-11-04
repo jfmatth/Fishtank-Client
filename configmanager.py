@@ -52,12 +52,13 @@ class ConfigManager(object):
         except:
             raise
 
+        tempdb.close()
+
     def _OpenDB(self, FileToOpen):
         self.db = TinyDB(str(FileToOpen) )
         self.settingstable = self.db.table("settings")
 
     def _loadsettings(self):
-        print("load settings")
         pass
 
     def initialize(self, LocationForDB):
