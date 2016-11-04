@@ -4,7 +4,7 @@ import pathlib
 
 import settingsdb
 
-TESTDIR = pathlib.Path(os.path.curdir)
+TESTDIR = pathlib.Path(os.path.curdir).resolve()
 TESTFILE = TESTDIR / "db.json"
 
 class FirstTest(unittest.TestCase):
@@ -39,12 +39,10 @@ class FirstTest(unittest.TestCase):
     def test3(self):
         c = settingsdb.setting()
         c.initialize(TESTDIR)
+        c.db.close()
         self.assertTrue(c.setup)
 
-        print(c.dbfile)
-        print(TESTFILE)
-
-        self.assertTrue(c.dbfile == str(TESTFILE) )
+        self.assertEqual(c.dbfile,TESTFILE)
         
         c.db.close()
         
