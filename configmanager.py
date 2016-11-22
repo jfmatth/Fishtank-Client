@@ -5,6 +5,37 @@ import pathlib
 
 DBNAME = "db.json"
 
+class MyDict(object):
+    a = 1
+    b = 2
+
+    _attribs = ["a", "b"]
+    settings = {}
+
+    def __init__(self):
+        self.db = TinyDB(DBNAME)
+
+    def ShowAttributes(self):
+        for a in self._attribs:
+            print (getattr(self, a))
+
+    def SaveAttributes(self):
+        q = Query()
+        for a in self._attribs:
+            if self.db.get(q.attribute == a):
+                self.db.update({"attribute":a, "value": getattr(self, a)}, q.attribute==a )
+            else:
+                self.db.insert({"attribute":a, "value": getattr(self, a)})
+        
+    def LoadAttributes(self):
+        q = Query()
+        for a in self._attribs:
+            E = self.db.get(q.attribute == a)
+            if E == None:
+                pass
+            else:
+                setattr(self, a, E["value"])
+
 class ConfigManager(object):
     dbpath = None
     urlpath = None
