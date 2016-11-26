@@ -6,7 +6,8 @@
 *.pydevproject
 activate.cmd
 env
-.idea
+.idea/
+.vscode/
 archives
 __pycache__/
 act35.bat
