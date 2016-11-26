@@ -10,8 +10,6 @@ class DBSettings(dict):
         self._LoadAllSettings()
 
     def __setitem__(self, key, value):
-        print(key, value)
-
         q = Query()
         if self.db.get(q.key == key):
             self.db.update( {"key":key, "value": value}, q.key==key )
@@ -29,10 +27,6 @@ class ConfigManager(object):
 
     _SAVEASATTRIBUTE = ["urlpath", "setup", ]
 
-    # _NOSAVE = ["db", "settings"]
-    # ATTRIBS = ["dbpath", "urlpath", "setup"]    # attributes to save to the DB    
-    # NOTATTRIBUTES = ATTRIBS + ["db", ]        # settings that won't be saved to DB
-    
     DBNAME = "db.json"
 
     def __init__(self, LocationForDB=None):
@@ -65,8 +59,6 @@ class ConfigManager(object):
         if hasattr(self, "db"):
             if name in self._SAVEASATTRIBUTE:
                 self._SaveAttributeToDB(name, value)
-        else:
-            print("Nope " + name)
 
         super().__setattr__(name, value)
 
