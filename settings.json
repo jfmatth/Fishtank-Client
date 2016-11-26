@@ -1,5 +1,4 @@
-{
-  "archivepath" : "./archives/",
+{"archivepath" : "./archives/",
   "dirglob" : ["CyberLink",
                 "Documents",
                 "Downloads",
@@ -9,5 +8,4 @@
                 "Roaming",
                 "Videos"],
   "drives" : ["C:/users/public/"],
-  "fileglob" : ["*.pyc", "*.dll", "*.csv", "*.iso", "*.pack"]
-}
+  "fileglob" : ["*.pyc", "*.dll", "*.csv", "*.iso", "*.pack"]}
