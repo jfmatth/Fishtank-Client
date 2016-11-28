@@ -49,7 +49,7 @@ class ConfigManager(object):
 
         try:
             self.db = TinyDB(str(DBFileToOpen))
-            self.setup = True
+            # self.setup = True
             self.dbpath = DBFilePath
         except:
             self.setup = False

@@ -152,23 +152,15 @@ class BaseArchiveEncryptor(object):
         return None
 
     def encrypt(self):
-
-
+        pass
 
     def run(self):
         # process all the archives that are NOT encrypted and write out the encrypted version.
 
         for archive in self.archive.unencrypted_archives():
             # archive will be a record of the meta-info for the archive we need to encrypy.
+            pass
 
 
-
-
-        pass
-
-
-
-
-    pass
 
 
