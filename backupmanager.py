@@ -4,7 +4,7 @@ import logging
 import os
 import pathlib
 
-from archive import ArchiveManager
+from archivemanager import ArchiveManager
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ class BackupManager(object):
         # fileglog = what filetypes to skip
         # drives = what drives to start at (could be a directory too)
         self.stopbackup = False
-        self.dirglob = [self.archive.path]  # don't backup the archives to the archives :)
-        self.fileglob = []
         self.drives = []
+        self.dirglob = []
+        self.fileglob = []
 
         self.CurrentFolder = None
         self.CurrentFile = None
@@ -116,6 +116,8 @@ class BackupManager(object):
 
     # run() - this is called to start the backups and run until everything is backed up, or _stop() returns true (via stopbackup)
     def run(self):
+        self.dirglob = [self.archive.path] + self.dirglob  # don't backup the archives to the archives :)
+
         logger.debug("BM: run()")
         for drive in self.drives:
             logger.debug("BM: drive = %s" % drive)

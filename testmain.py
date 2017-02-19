@@ -3,15 +3,15 @@ import os
 import sys
 import pathlib
 
-import archive
-import backup
+import archivemanager
+import backupmanager
 
-ARCHIVEPATH = pathlib.Path("archives/").resolve()
+aPATH = pathlib.Path("archives/").resolve()
 
-class TestArchiveManager(unittest.TestCase):
+class TestaManager(unittest.TestCase):
 
     def test_20_fileadd(self):
-        a = archive.ArchiveManager(ARCHIVEPATH)
+        a = a.aManager(aPATH)
         f = pathlib.Path(sys.executable)
 
         self.assertTrue(a.fileadd(f))
@@ -20,22 +20,22 @@ class TestArchiveManager(unittest.TestCase):
         self.assertTrue(a.fileadd(f))
 
     def test_30_filefind(self):
-        a = archive.ArchiveManager(ARCHIVEPATH)
+        a = a.aManager(aPATH)
         f = pathlib.Path(sys.executable)
 
         self.assertTrue(a.filefind(f) )
 
-    def test_40_checkarchives(self):
+    def test_40_checkas(self):
 
-        a = archive.ArchiveManager(ARCHIVEPATH)
+        a = a.aManager(aPATH)
 
-        for f in a.all_archives():
+        for f in a.all_as():
             self.assertTrue( str(os.path.exists(f.fullpath)) )
 
     def test_60_addallpython(self):
 
         p = pathlib.Path(sys.executable).parent
-        a = archive.ArchiveManager(ARCHIVEPATH)
+        a = a.aManager(aPATH)
 
         # add all files in the python directory
         for x in p.glob("*"):
@@ -44,7 +44,7 @@ class TestArchiveManager(unittest.TestCase):
 
     def test_70_deletefilerecord(self):
         # try to delete the first record
-        a = archive.ArchiveManager(ARCHIVEPATH)
+        a = a.aManager(aPATH)
 
         # find the record to delete, delete it, then validate it's not still in the DB
         record = pathlib.Path(a.all_files()[0].fullpath)
@@ -53,22 +53,24 @@ class TestArchiveManager(unittest.TestCase):
 
 
 
-class MyBackup(backup.BaseBackupManager):
+class MyBackup(backupmanager.BackupManager):
 
     def __init__(self, **kwargs):
         super(MyBackup, self).__init__(**kwargs)
 
         self.stopcount = 0
 
+        self.fileglob = ["*.pyc", "*.dll", "*.csv", "*.iso"]
+
 
     def _dirglob(self):
-        return [] + [self._archivepath(),]
+        return [] + [self._apath(),]
 
     def _drives(self):
         return [str(pathlib.Path(sys.executable).parent),]
 
     def _fileglob(self):
-        return ["*.pyc", "*.dll", "*.csv", "*.iso"]
+        return 
 
     def _stop(self):
         # print "test: %s" % self.stopcount
@@ -79,14 +81,14 @@ class MyBackup(backup.BaseBackupManager):
             return False
 
 
-class MyBlankBackup(backup.BaseBackupManager):
+class MyBlankBackup(backupmanager.BackupManager):
     pass
 
 
 class TestBackupManager(unittest.TestCase):
 
     def test_10(self):
-        b = MyBackup(mypath=ARCHIVEPATH)
+        b = MyBackup(mypath=aPATH)
         b.run()
 
     def test_20(self):
