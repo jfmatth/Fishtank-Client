@@ -40,7 +40,7 @@ class ArchiveManager():
     # manage an archive of files and the DB behind them
 
     # def __init__(self, archivepath=os.curdir):
-    def __init__(self, cfg = {}):
+    def __init__(self):
         #:
         #: cfg - Dictionary of expected configuration parameters
         #   "archivepath"   - Full path to where to hold all archive files, default current directory os.curdir

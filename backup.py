@@ -10,25 +10,28 @@ logger = logging.getLogger(__name__)
 
 # BackupManager - This is the base abstract class to get the backups working.  You should inherit from this, overriding
 # the various classes to make it work.  Without overriding things, nothing will get backed up.
+# you should override the following:
+#     _stop - this is a callable to return true if backups should stop, i.e. service end or ctrl-c
+#
+# # Expect the following settings in cfg:
+#   archivepath - absolute path to where archive file should go
+#
 class BackupManager(object):
 
-    # def __init__(self, mypath = None):
-    def __init__(self, cfg={}):
+    def __init__(self, cfg):
         #:
         #: cfg - Config dictionary of settings
-        #:      "path" - path to where to store archives, default to os.curdir
 
         logger.debug("BM: Initializing")
 
-        # self.archivepath = mypath or pathlib.Path(os.getcwd() )
-        self.ArchiveConfig = {
-            "archivepath" : cfg.get("path", pathlib.Path(os.getcwd())),
-        }
-
+        self.archivepath =  cfg.get("archivepath", pathlib.Path(os.getcwd())),
         self.archive = ArchiveManager(self.ArchiveConfig)
 
+        # dirglog = what directories to skip, and subdirectories
+        # fileglog = what filetypes to skip
+        # drives = what drives to start at (could be a directory too)
         self.stopbackup = False
-        self.dirglob = [self.archive.path]
+        self.dirglob = [self.archive.path]  # don't backup the archives to the archives :)
         self.fileglob = []
         self.drives = []
 
@@ -49,32 +52,8 @@ class BackupManager(object):
     def __repr__(self):
         return self.__str__()
 
-
-    # def _archivepath(self):
-    #     # this will probably return a settings property at some point
-    #     return self.archivepath
-    #
-    # # _dirglob - returns the directories to exclude from backup.  Should be retrieved from settings.  We always exclude ourself
-    # #
-    # def _dirglob(self):
-    #     """
-    #     Defines the list of folders to exclude from backup, including our own.
-    #     :return:
-    #     """
-    #     return [] + [self._archivepath()]
-    #
-    # # _fileglob - returns the file GLOB pattern to exclude from backup.
-    # #
-    # def _fileglob(self):
-    #     return []
-    #
-    # # _drives - returns a list of drives to backup
-    # def _drives(self):
-    #     # returns back a list of drives to backup.
-    #     return []
-
-    # _stop - A simple callback to know if we should stop the whole process.
     def _stop(self, instance):
+        # _stop - A simple callback to know if we should stop the whole process.
         return False
 
     def checkstop(self):
@@ -135,9 +114,8 @@ class BackupManager(object):
 
                 self.archive.fileadd(f)
 
-
+    # run() - this is called to start the backups and run until everything is backed up, or _stop() returns true (via stopbackup)
     def run(self):
-
         logger.debug("BM: run()")
         for drive in self.drives:
             logger.debug("BM: drive = %s" % drive)

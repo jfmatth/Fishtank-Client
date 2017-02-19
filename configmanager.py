@@ -41,6 +41,7 @@ class ConfigManager(object):
             raise Exception("Need a DB path")
 
         self.settings = DBSettings(self.db) 
+        self.setup = False
         self._LoadAttributes()
 
     def _open(self, LocationForDB):
