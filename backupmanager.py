@@ -8,6 +8,16 @@ from archivemanager import ArchiveManager
 
 logger = logging.getLogger(__name__)
 
+
+# defaults for our config dict that should contain all this, but in case it doesn't :)
+DEFAULTS = {
+    'archivepath' : pathlib.Path(os.getcwd() ),
+    'drives'      : [],
+    'dirglob'     : [], 
+    'fileglob'    : [], 
+}
+
+
 # BackupManager - This is the base abstract class to get the backups working.  You should inherit from this, overriding
 # the various classes to make it work.  Without overriding things, nothing will get backed up.
 # you should override the following:
@@ -24,16 +34,16 @@ class BackupManager(object):
 
         logger.debug("BM: Initializing")
 
-        self.archivepath =  cfg.get("archivepath", pathlib.Path(os.getcwd())),
+        self.archivepath =  cfg.get("archivepath", DEFAULTS['archivepath']),
         self.archive = ArchiveManager(self.ArchiveConfig)
 
         # dirglog = what directories to skip, and subdirectories
         # fileglog = what filetypes to skip
         # drives = what drives to start at (could be a directory too)
         self.stopbackup = False
-        self.drives = []
-        self.dirglob = []
-        self.fileglob = []
+        self.drives = cfg.get('drives', DEFAULTS['drives'])
+        self.dirglob = cfg.get('dirglob', DEFAULTS['dirglob'])
+        self.fileglob = cfg.get('fileglob', DEFAULTS['fileglob']) 
 
         self.CurrentFolder = None
         self.CurrentFile = None

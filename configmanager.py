@@ -2,7 +2,7 @@ from tinydb import TinyDB, Query
 import pathlib  
 
 class DBSettings(dict):
-    
+    # this     
     def __init__(self, settingsdb, *args, **kwargs):
         self.db = settingsdb
         super().__init__(*args, **kwargs)

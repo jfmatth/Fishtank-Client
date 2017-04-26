@@ -3,7 +3,7 @@ import os
 import sys
 import pathlib
 
-import archivemanager
+from import archivemanager
 import backupmanager
 
 aPATH = pathlib.Path("archives/").resolve()
@@ -83,7 +83,6 @@ class MyBackup(backupmanager.BackupManager):
 
 class MyBlankBackup(backupmanager.BackupManager):
     pass
-
 
 class TestBackupManager(unittest.TestCase):
 
