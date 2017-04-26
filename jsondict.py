@@ -2,8 +2,6 @@ from pathlib import Path
 import json
 import os
 
-JSONFILE = "jsondict.json"
-
 class jsondict(dict):
 
     def __init__(self, filename=None):
@@ -13,6 +11,7 @@ class jsondict(dict):
         if filename != None:
             if not os.path.exists(filename):
                 self.filename = Path.cwd() / filename
+                self.save()         # if we didn't exist, this creates the proper file for later
             else:
                 self.filename = Path(filename).resolve()
 
