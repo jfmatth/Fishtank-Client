@@ -2,22 +2,29 @@ from pathlib import Path
 import json
 import os
 
+JSONFILE = "jsondict.json"
+
 class jsondict(dict):
 
-    def __init__(self, *args, **kwargs):
-        self.filename = Path.cwd() / "jsondict.json"
+    def __init__(self, filename=None):
+        self.filename = None
 
-        if "filename" in kwargs:
-            self.filename = Path(kwargs["filename"]).resolve()
+        # try to open the file before we try to resolve it's path and convert to Pathlib.Path type
+        if filename != None:
+            if not os.path.exists(filename):
+                self.filename = Path.cwd() / filename
+            else:
+                self.filename = Path(filename).resolve()
 
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
         self._loadfromjson()
 
     def _loadfromjson(self):
-        if self.filename.exists():
+        if self.filename and self.filename.exists():
             self.update(json.loads(open(str(self.filename)).read()))
         
     def save(self):
-        with open(str(self.filename),"w") as f:
-            f.write(json.dumps(self))
+        if self.filename:
+            with open(str(self.filename),"w") as f:
+                f.write(json.dumps(self))
