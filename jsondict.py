@@ -3,8 +3,9 @@ import json
 import os
 
 class jsondict(dict):
-
     def __init__(self, filename=None):
+        super().__init__()
+
         self.filename = None
 
         # try to open the file before we try to resolve it's path and convert to Pathlib.Path type
@@ -15,7 +16,6 @@ class jsondict(dict):
             else:
                 self.filename = Path(filename).resolve()
 
-        super().__init__()
 
         self._loadfromjson()
 
@@ -27,3 +27,24 @@ class jsondict(dict):
         if self.filename:
             with open(str(self.filename),"w") as f:
                 f.write(json.dumps(self))
+
+
+if __name__=="__main__":
+    f = "test.json"
+    
+    # put tests here
+    d = jsondict()
+    d['key'] = "value"
+    d.save()
+
+    del(d)
+
+    d = jsondict(f)
+    d['key'] = "value"
+    d.save()
+    del(d)
+    d = jsondict(f)
+    print (d)
+    del(d)
+
+    os.remove(f)
