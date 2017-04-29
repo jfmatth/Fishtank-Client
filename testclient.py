@@ -1,7 +1,8 @@
 import json
 import logging
-from backup import BackupManager
-import pathlib
+from jsondict import jsondict
+
+from backupmanager import BackupManager
 
 logger = logging.getLogger(__name__)
 
@@ -10,19 +11,18 @@ def stopcallback(instance):
     print (instance.archive.size)
     return False
 
-s = json.loads(open("settings.json").read() )
-
-BackupConfig = {
-    "path" : s["archivepath"],
-}
+config = jsondict(filename="config.json")
+print (config)
 
 # backup = BackupManager( s["archivepath"] )
-backup = BackupManager( BackupConfig )
+backup = BackupManager( config )
 
-backup.drives = s['drives']
-backup.dirglob = s['dirglob']
-backup.fileglob = s['fileglob']
+backup.drives = config['drives']
+backup.dirglob = config['dirglob']
+backup.fileglob = config['fileglob']
 
 backup._stop = stopcallback
 
 print(backup)
+
+backup.run()

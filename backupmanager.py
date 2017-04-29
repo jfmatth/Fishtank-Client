@@ -35,7 +35,7 @@ class BackupManager(object):
         logger.debug("BM: Initializing")
 
         self.archivepath =  cfg.get("archivepath", DEFAULTS['archivepath']),
-        self.archive = ArchiveManager(self.ArchiveConfig)
+        self.archive = ArchiveManager(cfg)
 
         # dirglog = what directories to skip, and subdirectories
         # fileglog = what filetypes to skip

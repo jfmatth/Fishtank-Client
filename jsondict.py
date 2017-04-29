@@ -29,6 +29,8 @@ class jsondict(dict):
                 f.write(json.dumps(self))
 
 
+
+# basic tests
 if __name__=="__main__":
     f = "test.json"
     
@@ -38,13 +40,17 @@ if __name__=="__main__":
     d.save()
 
     del(d)
-
+    
+    if os.path.exists(f):
+        os.remove(f)
     d = jsondict(f)
     d['key'] = "value"
+    d['string'] = "String Value"
+    d['int'] = 10
+    d["float"] = 10.991
     d.save()
     del(d)
     d = jsondict(f)
     print (d)
     del(d)
 
-    os.remove(f)

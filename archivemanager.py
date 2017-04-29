@@ -36,11 +36,13 @@ class File(basetable):
     class Meta:
         primary_key = peewee.CompositeKey("fullpath", "crc")
 
+
+
 class ArchiveManager():
     # manage an archive of files and the DB behind them
 
     # def __init__(self, archivepath=os.curdir):
-    def __init__(self):
+    def __init__(self, cfg):
         #:
         #: cfg - Dictionary of expected configuration parameters
         #   "archivepath"   - Full path to where to hold all archive files, default current directory os.curdir
