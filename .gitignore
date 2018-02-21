@@ -1,6 +1,5 @@
 *.log
 *.db
-*.json
 *.pyc
 *.project
 *.pydevproject
