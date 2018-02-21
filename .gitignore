@@ -6,14 +6,9 @@
 *.pydevproject
 activate.cmd
 env
-.idea/
 .vscode/
 archives
 __pycache__/
-act35.bat
 activate.bat
 db/
-environment.py
-vPython27/
-vPython35/
-settings.json
+vPython36/
