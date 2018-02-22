@@ -5,52 +5,36 @@ import os
 import pathlib
 
 from archivemanager import ArchiveManager
+from config import _Config
 
 logger = logging.getLogger(__name__)
 
-
-# defaults for our config dict that should contain all this, but in case it doesn't :)
-DEFAULTS = {
-    'archivepath' : pathlib.Path(os.getcwd() ),
-    'drives'      : [],
-    'dirglob'     : [], 
-    'fileglob'    : [], 
-}
-
-
-# BackupManager - This is the base abstract class to get the backups working.  You should inherit from this, overriding
-# the various classes to make it work.  Without overriding things, nothing will get backed up.
-# you should override the following:
-#     _stop - this is a callable to return true if backups should stop, i.e. service end or ctrl-c
-#
-# # Expect the following settings in cfg:
-#   archivepath - absolute path to where archive file should go
-#
 class BackupManager(object):
+    """
+    This is the base abstract class to get the backups working.  You should inherit from this, overriding
+    the various classes to make it work.  Without overriding things, nothing will get backed up.
+    you should override the following:
+        _stop - this is a callable to return true if backups should stop, i.e. service end or ctrl-c
+    """
 
-    def __init__(self, cfg):
-        #:
-        #: cfg - Config dictionary of settings
+    def __init__(self, config):
+        logger.debug("BackupManager: Initializing")
 
-        logger.debug("BM: Initializing")
+        assert isinstance(config, _Config)
 
-        self.archivepath =  cfg.get("archivepath", DEFAULTS['archivepath']),
-        self.archive = ArchiveManager(cfg)
-
-        # dirglog = what directories to skip, and subdirectories
-        # fileglog = what filetypes to skip
-        # drives = what drives to start at (could be a directory too)
+        self.archive = ArchiveManager(config)
         self.stopbackup = False
-        self.drives = cfg.get('drives', DEFAULTS['drives'])
-        self.dirglob = cfg.get('dirglob', DEFAULTS['dirglob'])
-        self.fileglob = cfg.get('fileglob', DEFAULTS['fileglob']) 
+
+        self.drives = config.RootFolders()      # What drives / root folders should we be backing up
+        self.dirglob = config.folders           # what folders are excluded
+        self.fileglob = config.extensions       # what extensions to exclude
 
         self.CurrentFolder = None
         self.CurrentFile = None
 
-        logger.debug("BM: archivepath=%s" % self.archive.path)
-        logger.debug("BM._dirglob() = %s" % self.dirglob)
-        logger.debug("BM:_drives() = %s" % self.drives)
+        logger.debug("BackupManager: archivepath=%s" % self.archive.path)
+        logger.debug("BackupManager._dirglob() = %s" % self.dirglob)
+        logger.debug("BackupManager:_drives() = %s" % self.drives)
 
     def __str__(self):
         r = "drives = %s\n" % self.drives
@@ -63,10 +47,16 @@ class BackupManager(object):
         return self.__str__()
 
     def _stop(self, instance):
+        """
+        A stub callback for this class, most likely overridden.
+        """
         # _stop - A simple callback to know if we should stop the whole process.
         return False
 
     def checkstop(self):
+        """
+        called when we are seeing if we should stop this whole process
+        """
         if hasattr(self._stop, "__call__"):
 
             if self.stopbackup or self._stop(self):
@@ -75,21 +65,20 @@ class BackupManager(object):
             else:
                 return False
 
-    # globexcluded - See if glob matches any of the glob(s)
-    #
     def globexcluded(self, glob, globitem):
-        # check to see if this item matches the list of globs
+        """ check to see if this item matches the list of globs """
         for x in glob:
             if globitem.match(str(x)):
-                logger.debug("BM: Skipping excluded %s" % globitem)
+                logger.debug("BackupManager: Skipping excluded %s" % globitem)
                 return True
         else:
             return False
 
-    # filebackuplist - Yield only files in this folder that are OK to backup to the archive.
-    #
     def filebackuplist(self, path):
-        # path is a pathlib path, so it's iterable for all files.
+        """
+        Yield only files in this folder that are OK to backup to the archive
+        """
+        assert isinstance(path, pathlib.Path)
 
         for f in path.glob("*"):
             # don't backup directories, that's above us, we are only interested in files in this folder.
@@ -104,15 +93,14 @@ class BackupManager(object):
 
             yield f
 
-
-    # addfoldertoarchive - Iterrate over all files in this folder and see if we should add them to the archive.
-    #
     def addfoldertoarchive(self, folder):
-        # make sure we have a Pathlib object that has the fullpath
+        """
+        Iterrate over all files in this folder and see if we should add them to the archive.
+        """
 
         p = pathlib.Path(folder).resolve()
 
-        logger.info("BM: addfoldertoarchive.p = %s" % p)
+        logger.debug("BackupManager: addfoldertoarchive.p = %s" % p)
 
         if not self.globexcluded(self.dirglob, p):
             self.CurrentFolder = folder
@@ -124,13 +112,16 @@ class BackupManager(object):
 
                 self.archive.fileadd(f)
 
-    # run() - this is called to start the backups and run until everything is backed up, or _stop() returns true (via stopbackup)
     def run(self):
+        """
+        Called to start the backups and run until everything is backed up, or _stop() returns true
+        (via stopbackup)
+        """
         self.dirglob = [self.archive.path] + self.dirglob  # don't backup the archives to the archives :)
 
-        logger.debug("BM: run()")
+        logger.debug("BackupManager: run()")
         for drive in self.drives:
-            logger.debug("BM: drive = %s" % drive)
+            logger.debug("BackupManager: drive = %s" % drive)
 
             if self.stopbackup: break
 

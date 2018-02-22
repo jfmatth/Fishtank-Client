@@ -1,25 +1,29 @@
+# config.py - configuration manager for Fishtank
+# 
+# A factory via the ConfigManager() to return a os-platform specific instance of a Config()
+# object.  Most methods in the Config() parent do all the work, and a few of the sub-classes
+# change simple behavior
+
 import pathlib
 import os
 import platform
 import json
 
-basepath = pathlib.Path(os.path.abspath(os.path.dirname(__file__) ) )
+import logging
+logger = logging.getLogger(__name__)
 
-class Config(object):
+basepath = pathlib.Path(os.path.abspath(os.getcwd() ) )
+
+class _Config(object):
     # base meta class for all config types that return configuration info
     # this will derive all other classes based on Operating system
 
     def __init__(self):
-        # common init routine, should pull down any setup necessary from server
         self.settings = {}
         self.defaultsfile = "defaults.json"
 
         self._Setup()
         self._LoadDefaults()
-
-    def __getattr__(self, name):
-        # fallback if we are looking from something from settings
-        return self.settings.get(name, None)
 
     def _Setup(self):
         # we set any local stuff here so as not to have to override __init__
@@ -27,12 +31,20 @@ class Config(object):
 
     def _LoadDefaults(self):
         # load a default file with settings?
-        print("Loading defaults from %s" % self.defaultsfile)
+        logger.info("Loading defaults from %s" % self.defaultsfile) 
 
         if self.defaultsfile and pathlib.Path(self.defaultsfile).exists():
-            self.settings = json.loads(open(str(self.defaultsfile)).read() )
+            with open(str(self.defaultsfile)) as f:
+                self.settings = json.loads(f.read() )
         else:
-            print("no settings file %s exists" % self.defaultsfile)
+            logger.error("no settings file %s exists" % self.defaultsfile)
+
+    def __getattr__(self, name):
+        # allow generic settings, but raise an exception if it's missing, instead of None
+        if not self.settings.get(name, None):
+            raise Exception("config setting %s not found" % name)
+
+        return self.settings[name]
 
     def ArchivePath(self):
         return basepath / "archives"
@@ -43,37 +55,35 @@ class Config(object):
     def RootFolders(self):
         # return a list of root folders to backup, these might be:
         # C:/users/, /home, etc, depending on the platform
-        return self.settings.get("RootFolders", None)
+        return self.settings.get("rootfolders", None)
 
 
-class WindowsConfig(Config):
+class _WindowsConfig(_Config):
 
     def _Setup(self):
-        self.defaultsfile = "defaultWindows.json"
+        self.defaultsfile = "defaultwindows.json"
 
-class OSXConfig(Config):
-    pass
+# class _OSXConfig(_Config):
+#     pass
 
-class LinuxConfig(Config):
+class _LinuxConfig(_Config):
     pass
 
 
 # The ConfigManager returns a config object based on the running OS.  Most properties / methods
 # should be defined in the meta class and inherited down to the individual OS specific class, but
 # can be overriden if necessary
-def ConfigManager():
+def ConfigManager(plat=None):
 
-    p = platform.system()
+    p = plat or platform.system()
 
     if  p == "Windows":
-        return WindowsConfig()
+        return _WindowsConfig()
 
     if p == "Linux":
-        return LinuxConfig()
+        return _LinuxConfig()
     
-    assert 0, "Platform %s not supported" % p
-
-
+    raise Exception("Platform %s not supported" % p)
 
 if __name__ == "__main__":
     # 

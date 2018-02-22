@@ -1,12 +1,11 @@
-{"dirglob" :   ["CyberLink",
+{"folders" :   ["CyberLink",
                 "Documents",
                 "Downloads",
-                "C:\\Users\\Public\\Daybreak Game Company\\Installed Games\\PlanetSide 2\\Resources",
                 "Music",
                 "Pictures",
                 "Roaming",
                 "Videos"],
-  "fileglob" : ["*.pyc", "*.dll", "*.csv", "*.iso", "*.pack"],
-  "maxfilesizeKB":  102400000,
-  "RootFolders" : ["C:/users/public"]
-   }
+  "extensions" : ["*.pyc", "*.dll", "*.csv", "*.iso", "*.pack"],
+  "maxfilesizekb":  102400000,
+  "rootfolders" : ["C:/users/public"]
+ }
