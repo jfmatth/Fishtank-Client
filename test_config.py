@@ -30,6 +30,12 @@ class TestConfigManagerProperties(unittest.TestCase):
     def test_maxsizekb(self):
         self.assertGreater(self.config.maxfilesizekb,0)
 
+    def test_publickey(self):
+        self.assertIsNotNone(self.config.publickey)
+
+    def test_cryptextension(self):
+        self.assertIsNotNone(self.config.cryptextension)
+        
     def test_BogusProperty(self):
         with self.assertRaises(Exception):
             self.config.bogusproperty

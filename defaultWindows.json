@@ -4,8 +4,11 @@
                 "Music",
                 "Pictures",
                 "Roaming",
-                "Videos"],
+                "Videos", 
+                "c:/users/jfmatth/"],
   "extensions" : ["*.pyc", "*.dll", "*.csv", "*.iso", "*.pack"],
   "maxfilesizekb":  102400000,
-  "rootfolders" : ["C:/users/public"]
+  "rootfolders" : ["C:/users/public"],
+  "publickey": "thisismypublickeyfortesting", 
+  "cryptextension" : "encrypted"
  }
