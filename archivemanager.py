@@ -121,6 +121,11 @@ class ArchiveManager():
         logger.info("ArchiveManager: Created new backup backup record %s" % self.backuprecord)
 
 
+    def _writearchive(self, filename):
+        self.checkarchive()
+        self.archive.write( filename )
+        
+
     def checkarchive(self):
         """
         Make sure this archive meets our criteria and we don't need a new one
@@ -132,7 +137,7 @@ class ArchiveManager():
         """
          Add to the DB and ZIP file.
         """
-        self.checkarchive()
+        # self.checkarchive()
 
         # handle any kind of file coming in, pathlib or str :)
         f = pathlib.Path(filetoadd).resolve()
@@ -144,7 +149,10 @@ class ArchiveManager():
                 with database.atomic():
                     logger.debug("ArchiveManager: adding %s to DB/Archive" % f)
 
-                    self.archive.write( str(f) )
+                    # self.archive.write( str(f) )
+                    # replace with _writearchive so we don't generate files we don't need to
+                    self._writearchive( str(f) )
+
                     self.size += f.stat().st_size
 
                     # keep the times as integers for simplicity sake.
