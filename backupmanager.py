@@ -5,7 +5,7 @@ import os
 import pathlib
 
 from archivemanager import ArchiveManager
-from config import _Config
+from config import cfg
 
 logger = logging.getLogger(__name__)
 
@@ -17,17 +17,15 @@ class BackupManager(object):
         _stop - this is a callable to return true if backups should stop, i.e. service end or ctrl-c
     """
 
-    def __init__(self, config):
+    def __init__(self):
         logger.debug("BackupManager: Initializing")
 
-        assert isinstance(config, _Config)
-
-        self.archive = ArchiveManager(config)
+        self.archive = ArchiveManager()
         self.stopbackup = False
 
-        self.drives = config.RootFolders()      # What drives / root folders should we be backing up
-        self.dirglob = config.folders           # what folders are excluded
-        self.fileglob = config.extensions       # what extensions to exclude
+        self.drives =cfg.RootFolders()      # What drives / root folders should we be backing up
+        self.dirglob = cfg.folders           # what folders are excluded
+        self.fileglob = cfg.extensions       # what extensions to exclude
 
         self.CurrentFolder = None
         self.CurrentFile = None

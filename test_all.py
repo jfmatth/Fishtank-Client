@@ -5,7 +5,7 @@ import pathlib
 
 from archivemanager import ArchiveManager
 from backupmanager import BackupManager
-from config import ConfigManager
+from config import cfg
 
 # aPATH = pathlib.Path("archives/").resolve()
 
@@ -14,8 +14,7 @@ filetotest = pathlib.Path(sys.executable)
 class TestArchiveManager(unittest.TestCase):
 
     def setUp(self):
-        self.config = ConfigManager()
-        self.AM = ArchiveManager(self.config)
+        self.AM = ArchiveManager()
 
     def test_20_fileadd(self):
         

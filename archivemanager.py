@@ -5,7 +5,7 @@ import os
 import uuid
 
 from db import database, Backup, File
-from config import _Config
+from config import cfg
 
 logger = logging.getLogger(__name__)
 
@@ -14,13 +14,11 @@ class ArchiveManager():
     Manager of Archives via DB layout above
     """
 
-    def __init__(self, config):
+    def __init__(self):
 
         logger.debug("ArchiveManager: __init__")
 
-        assert isinstance(config, _Config)
-
-        self.maxsize = config.maxfilesizekb
+        self.maxsize = cfg.maxfilesizekb
 
         self.size = 0                   # current size of archive
         self.archive = None             # current archive (zip) file being used.
@@ -28,7 +26,7 @@ class ArchiveManager():
         self.backuprecord = None        # FK pointer
 
         try:
-            ap = config.ArchivePath()
+            ap = cfg.ArchivePath()
             pathlib.Path(ap).mkdir(parents=True, exist_ok=True)
             self.path = pathlib.Path(ap).resolve()
         except:

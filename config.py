@@ -100,8 +100,9 @@ def ConfigManager(plat=None):
     
     raise Exception("Platform %s not supported" % p)
 
+cfg = ConfigManager()
+
 if __name__ == "__main__":
-    x = ConfigManager()
-    print("Platform: %s" % x.Platform())
-    print("ArchivePath: %s" % x.ArchivePath())
+    print("Platform: %s" % cfg.Platform())
+    print("ArchivePath: %s" % cfg.ArchivePath())
 
