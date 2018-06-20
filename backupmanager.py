@@ -123,6 +123,10 @@ class BackupManager(object):
 
             if self.stopbackup: break
 
+# Check notes from 3.x os.walk
+# https://docs.python.org/3/library/os.html#os.walk
+
+
             for root, dirs, files in os.walk(drive):
 
                 if self.stopbackup: break
